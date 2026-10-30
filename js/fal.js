@@ -62,7 +62,10 @@ async function falFetch(url, key, { method = 'GET', body, signal, log }) {
       await sleep(wait, signal);
       continue;
     }
-    const err = new Error(describeHttpError(res.status, detail));
+    let msg = describeHttpError(res.status, detail);
+    // Tài khoản fal.ai bị khoá vì hết số dư → gợi ý nạp thêm
+    if (/top_?up|balance|exhausted/i.test(detail)) msg += ' // tài khoản fal.ai hết số dư, nạp thêm tại fal.ai/dashboard/billing';
+    const err = new Error(msg);
     err.status = res.status;
     err.detail = detail;
     throw err;
