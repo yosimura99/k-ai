@@ -328,7 +328,8 @@ export function initImage(ctx) {
       if (e.name === 'AbortError') log.warn('đã dừng tạo ảnh');
       else {
         log.error(e.message || String(e));
-        if (e.status === 401 || e.status === 403) ctx.setStatusLine('[LỖI] KHOÁ API TẠO ẢNH SAI HOẶC HẾT HẠN', 'error');
+        if (/hết số dư/.test(e.message)) ctx.setStatusLine('[LỖI] TÀI KHOẢN FAL.AI HẾT SỐ DƯ', 'error');
+        else if (e.status === 401 || e.status === 403) ctx.setStatusLine('[LỖI] KHOÁ API TẠO ẢNH SAI HOẶC HẾT HẠN', 'error');
       }
     } finally {
       clearTimeout(slow);
