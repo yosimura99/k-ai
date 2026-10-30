@@ -196,7 +196,7 @@ export function initImage(ctx) {
       if (res.ok) return res.json();
       const detail = await readErrorDetail(res);
       const low = detail.toLowerCase();
-      if (res.status >= 400 && res.status < 500 && res.status !== 401 && res.status !== 403 && res.status !== 429) {
+      if (res.status >= 400 && res.status < 500 && ![401, 403, 429].includes(res.status) && !low.includes('api key')) {
         if ('response_format' in body && (low.includes('response_format') || low.includes('response format'))) {
           log.warn('nhà cung cấp không nhận response_format // thử lại không có tham số này');
           delete body.response_format;

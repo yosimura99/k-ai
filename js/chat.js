@@ -208,7 +208,7 @@ export function initChat(ctx) {
         res = await request(url, s.chatApiKey, { model: s.chatModel, messages, stream }, controller.signal);
       } catch (e) {
         // Một số nhà cung cấp không hỗ trợ stream → thử lại một lần ở chế độ thường
-        if (stream && e.status && e.status >= 400 && e.status < 500 && e.status !== 401 && e.status !== 403 && e.status !== 429) {
+        if (stream && e.status >= 400 && e.status < 500 && ![401, 403, 429].includes(e.status) && !/api key|khoá/i.test(e.message)) {
           log.warn(`${e.message} // thử lại không phát trực tiếp`);
           stream = false;
           res = await request(url, s.chatApiKey, { model: s.chatModel, messages, stream: false }, controller.signal);
@@ -252,7 +252,7 @@ export function initChat(ctx) {
         log.error(`không kết nối được ${url} // mạng hoặc CORS bị chặn (${e.message})`);
       } else {
         log.error(e.message || String(e));
-        if (e.status === 401 || e.status === 403) ctx.onStatus(false);
+        if (e.status === 401 || e.status === 403 || /api key/i.test(e.message)) ctx.onStatus(false);
       }
     } finally {
       clearTimeout(slowTimer);
