@@ -3,7 +3,7 @@
  */
 
 /** Phiên bản ứng dụng (hiển thị trong nhật ký khi khởi động). */
-export const APP_VERSION = '1.0.0';
+export const APP_VERSION = '1.1.0';
 
 /** Khoá lưu trữ trong localStorage. */
 export const LS_KEYS = {
@@ -27,6 +27,10 @@ export const DEFAULT_SETTINGS = {
   imageApiKey: '',
   imageShareKey: true,       // dùng chung khoá với trò chuyện
   imageSize: '',             // '' = để nhà cung cấp tự chọn kích thước
+  imageProvider: 'openai',   // 'openai' = Chuẩn OpenAI (/images/generations) | 'fal' = fal.ai
+  falApiKey: '',             // khoá fal.ai dạng KEY_ID:KEY_SECRET (gửi qua header "Authorization: Key ...")
+  falModel: 'fal-ai/flux/schnell',
+  falMode: 'auto',           // 'auto' | 'sync' (fal.run) | 'queue' (queue.fal.run + thăm dò trạng thái)
 };
 
 /** Bộ cài sẵn: điền nhanh các ô cài đặt. */
@@ -38,6 +42,7 @@ export const PRESETS = {
     imageBaseUrl: 'https://api.x.ai/v1',
     imageModel: 'grok-2-image',
     imageSize: '',
+    imageProvider: 'openai',
   },
   openai: {
     label: 'OpenAI',
@@ -46,8 +51,55 @@ export const PRESETS = {
     imageBaseUrl: 'https://api.openai.com/v1',
     imageModel: 'gpt-image-1',
     imageSize: '1024x1024',
+    imageProvider: 'openai',
+  },
+  // fal.ai chỉ dùng cho TẠO ẢNH; phần trò chuyện giữ nguyên.
+  fal: {
+    label: 'fal.ai (chỉ tạo ảnh)',
+    imageProvider: 'fal',
+    falModel: 'fal-ai/flux/schnell',
+    falMode: 'auto',
+    imageSize: '1024x1024',
   },
 };
+
+/**
+ * Các mô hình tạo ảnh từ văn bản phổ biến trên fal.ai (id lấy từ fal.ai/models, 10/2026).
+ *  - safety: mô hình có tham số `enable_safety_checker`.
+ *  - queue:  chế độ 'auto' sẽ dùng hàng đợi (queue.fal.run) cho mô hình chậm.
+ */
+export const FAL_MODELS = [
+  { id: 'fal-ai/flux/schnell', label: 'FLUX.1 [schnell] — nhanh', safety: true, queue: false },
+  { id: 'fal-ai/flux/dev', label: 'FLUX.1 [dev]', safety: true, queue: true },
+  { id: 'fal-ai/flux-pro/v1.1', label: 'FLUX1.1 [pro]', safety: false, queue: true },
+  { id: 'fal-ai/recraft/v3/text-to-image', label: 'Recraft V3', safety: true, queue: true },
+];
+
+/** Địa chỉ gọi fal.ai: đồng bộ và hàng đợi. */
+export const FAL_SYNC_URL = 'https://fal.run';
+export const FAL_QUEUE_URL = 'https://queue.fal.run';
+
+/** Đổi kích thước kiểu OpenAI (ô chọn) sang tên kích thước của fal.ai. '' = mặc định của mô hình. */
+export const FAL_SIZE_MAP = {
+  '1024x1024': 'square_hd',
+  '512x512': 'square',
+  '256x256': 'square',
+  '1024x1536': 'portrait_4_3',
+  '1536x1024': 'landscape_4_3',
+  '1024x1792': 'portrait_16_9',
+  '1792x1024': 'landscape_16_9',
+};
+
+/** Khoá API đang dùng cho TẠO ẢNH theo nhà cung cấp. */
+export function imageKeyOf(s) {
+  if (s.imageProvider === 'fal') return s.falApiKey;
+  return s.imageShareKey ? s.chatApiKey : s.imageApiKey;
+}
+
+/** Mô hình đang dùng cho TẠO ẢNH theo nhà cung cấp. */
+export function imageModelOf(s) {
+  return s.imageProvider === 'fal' ? s.falModel : s.imageModel;
+}
 
 /** Các kích thước ảnh cho ô chọn. '' = mặc định của nhà cung cấp. */
 export const IMAGE_SIZES = [

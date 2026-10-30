@@ -2,8 +2,10 @@
  * image.js — Tab TẠO ẢNH.
  * Gọi endpoint tạo ảnh tương thích OpenAI: POST {baseUrl}/images/generations
  * Nhận cả `b64_json` lẫn `url`. Ảnh được lưu trong IndexedDB trên máy.
+ * Hoặc nhà cung cấp fal.ai (xem fal.js), chọn trong CÀI ĐẶT → TẠO ẢNH → nhà cung cấp.
  */
-import { SLOW_MS, MAX_RETRIES, IMAGE_SIZES } from './config.js';
+import { SLOW_MS, MAX_RETRIES, IMAGE_SIZES, imageKeyOf, imageModelOf } from './config.js';
+import { falGenerate } from './fal.js';
 import { putImage, listImages, deleteImage, storageEstimate } from './storage.js';
 import { createLogger, describeHttpError, readErrorDetail, secs } from './log.js';
 import { el, ask, downloadBlob, sleep, joinUrl } from './ui.js';
@@ -229,53 +231,86 @@ export function initImage(ctx) {
     }
   }
 
+  /**
+   * Tải ảnh từ URL về thành Blob để lưu lâu dài (URL của nhà cung cấp thường hết hạn).
+   * Thất bại (CORS / mạng) → chỉ lưu URL.
+   */
+  async function attachFromUrl(rec, url, signal) {
+    if (url.startsWith('data:')) { rec.blob = b64ToBlob(url); return; }
+    try {
+      const r = await fetch(url, { signal });
+      if (!r.ok) throw new Error();
+      rec.blob = await r.blob();
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      rec.url = url;
+      log.warn('không tải được ảnh về máy (CORS) // chỉ lưu đường dẫn, có thể hết hạn');
+    }
+  }
+
+  /** Nhà cung cấp chuẩn OpenAI: POST {baseUrl}/images/generations */
+  async function generateOpenAI(s, key, prompt, rec, signal) {
+    const url = joinUrl(s.imageBaseUrl, '/images/generations');
+    const body = { model: s.imageModel, prompt, n: 1, response_format: 'b64_json' };
+    if (sizeSel.value) body.size = sizeSel.value;
+    log.info(`đang tạo ảnh // ${s.imageModel}${body.size ? ' // ' + body.size : ''}`);
+    let j;
+    try {
+      j = await callApi(url, key, body, signal);
+    } catch (e) {
+      if (e instanceof TypeError) throw new Error(`không kết nối được ${url} // mạng hoặc CORS bị chặn (${e.message})`);
+      throw e;
+    }
+    const item = j?.data?.[0];
+    if (!item) throw new Error('phản hồi không có ảnh');
+    rec.size = body.size || '';
+    rec.revisedPrompt = item.revised_prompt || '';
+    if (item.b64_json) rec.blob = b64ToBlob(item.b64_json);
+    else if (item.url) await attachFromUrl(rec, item.url, signal);
+    else throw new Error('phản hồi không có b64_json hoặc url');
+  }
+
+  /** Nhà cung cấp fal.ai: fal.run (đồng bộ) hoặc queue.fal.run (hàng đợi). */
+  async function generateFal(s, key, prompt, rec, signal) {
+    let out;
+    try {
+      out = await falGenerate({ model: s.falModel, key, prompt, size: sizeSel.value, mode: s.falMode, signal, log });
+    } catch (e) {
+      if (e instanceof TypeError) throw new Error(`không kết nối được fal.ai // mạng hoặc CORS bị chặn (${e.message})`);
+      throw e;
+    }
+    rec.size = out.size;
+    await attachFromUrl(rec, out.url, signal);
+  }
+
   async function generate() {
     const prompt = promptEl.value.trim();
     if (!prompt) { log.warn('chưa nhập mô tả ảnh'); return; }
     const s = ctx.getSettings();
-    const key = s.imageShareKey ? s.chatApiKey : s.imageApiKey;
+    const isFal = s.imageProvider === 'fal';
+    const key = imageKeyOf(s);
     if (!key) {
-      log.warn('chưa có khoá API tạo ảnh // vào CÀI ĐẶT để nhập khoá');
+      log.warn(isFal ? 'chưa có khoá fal.ai // vào CÀI ĐẶT để nhập khoá (dạng KEY_ID:KEY_SECRET)' : 'chưa có khoá API tạo ảnh // vào CÀI ĐẶT để nhập khoá');
       ctx.setStatusLine('[CẢNH BÁO] CHƯA CÓ KHOÁ API TẠO ẢNH', 'warn');
       return;
     }
-    const url = joinUrl(s.imageBaseUrl, '/images/generations');
-    const body = { model: s.imageModel, prompt, n: 1, response_format: 'b64_json' };
-    if (sizeSel.value) body.size = sizeSel.value;
+
+    if (isFal && !key.includes(':')) log.warn('khoá fal.ai thường có dạng KEY_ID:KEY_SECRET // vẫn thử gửi');
 
     controller = new AbortController();
     genBtn.textContent = 'DỪNG';
     genBtn.classList.add('btn-red');
     showLoading();
-    log.info(`đang tạo ảnh // ${s.imageModel}${body.size ? ' // ' + body.size : ''}`);
     const t0 = performance.now();
     const slow = setTimeout(() => log.warn('phản hồi chậm // vẫn đang chờ...'), SLOW_MS * 2);
 
     try {
-      const j = await callApi(url, key, body, controller.signal);
-      const item = j?.data?.[0];
-      if (!item) throw new Error('phản hồi không có ảnh');
       const rec = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        prompt, model: s.imageModel, size: body.size || '', createdAt: Date.now(),
-        revisedPrompt: item.revised_prompt || '',
+        prompt, model: imageModelOf(s), provider: isFal ? 'fal' : 'openai', size: '', createdAt: Date.now(),
       };
-      if (item.b64_json) {
-        rec.blob = b64ToBlob(item.b64_json);
-      } else if (item.url) {
-        // Thử tải ảnh về để lưu lâu dài (URL của nhà cung cấp thường hết hạn)
-        try {
-          const r = await fetch(item.url, { signal: controller.signal });
-          if (!r.ok) throw new Error();
-          rec.blob = await r.blob();
-        } catch (e) {
-          if (e.name === 'AbortError') throw e;
-          rec.url = item.url;
-          log.warn('không tải được ảnh về máy (CORS) // chỉ lưu đường dẫn, có thể hết hạn');
-        }
-      } else {
-        throw new Error('phản hồi không có b64_json hoặc url');
-      }
+      if (isFal) await generateFal(s, key, prompt, rec, controller.signal);
+      else await generateOpenAI(s, key, prompt, rec, controller.signal);
       try {
         await putImage(rec);
       } catch (e) {
@@ -291,8 +326,10 @@ export function initImage(ctx) {
     } catch (e) {
       showStage(images.find((r) => r.id === currentId) || null);
       if (e.name === 'AbortError') log.warn('đã dừng tạo ảnh');
-      else if (e instanceof TypeError) log.error(`không kết nối được ${url} // mạng hoặc CORS bị chặn (${e.message})`);
-      else log.error(e.message || String(e));
+      else {
+        log.error(e.message || String(e));
+        if (e.status === 401 || e.status === 403) ctx.setStatusLine('[LỖI] KHOÁ API TẠO ẢNH SAI HOẶC HẾT HẠN', 'error');
+      }
     } finally {
       clearTimeout(slow);
       controller = null;

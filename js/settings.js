@@ -1,8 +1,9 @@
 /**
- * settings.js — Tab CÀI ĐẶT: địa chỉ API, mô hình, khoá, bộ cài sẵn, khoá sinh trắc, xoá dữ liệu.
+ * settings.js — Tab CÀI ĐẶT: địa chỉ API, mô hình, khoá, nhà cung cấp ảnh (chuẩn OpenAI / fal.ai),
+ * bộ cài sẵn, khoá sinh trắc, xoá dữ liệu.
  * Mọi thay đổi được tự động lưu vào localStorage.
  */
-import { PRESETS, DEFAULT_SETTINGS } from './config.js';
+import { PRESETS, DEFAULT_SETTINGS, FAL_MODELS } from './config.js';
 import { createLogger } from './log.js';
 import { el, ask } from './ui.js';
 import { wipeAll } from './storage.js';
@@ -13,7 +14,7 @@ import { wipeAll } from './storage.js';
 export function initSettings(ctx) {
   const $ = (id) => document.getElementById(id);
   const log = createLogger($('set-log'));
-  const fields = ['chatBaseUrl', 'chatModel', 'chatApiKey', 'imageBaseUrl', 'imageModel', 'imageApiKey'];
+  const fields = ['chatBaseUrl', 'chatModel', 'chatApiKey', 'imageBaseUrl', 'imageModel', 'imageApiKey', 'falApiKey', 'falModel'];
 
   /* ---------- bộ cài sẵn ---------- */
   const presetSel = $('set-preset');
@@ -39,8 +40,16 @@ export function initSettings(ctx) {
     $('set-stream').checked = !!s.stream;
     $('row-imageApiKey').classList.toggle('disabled', !!s.imageShareKey);
     $('set-imageApiKey').disabled = !!s.imageShareKey;
-    // Đánh dấu bộ cài sẵn đang khớp (nếu có)
-    const match = Object.entries(PRESETS).find(([, p]) => p.chatBaseUrl === s.chatBaseUrl && p.chatModel === s.chatModel && p.imageModel === s.imageModel);
+    // Nhà cung cấp tạo ảnh: hiện nhóm ô tương ứng
+    const isFal = s.imageProvider === 'fal';
+    $('set-imageProvider').value = isFal ? 'fal' : 'openai';
+    $('img-prov-openai').hidden = isFal;
+    $('img-prov-fal').hidden = !isFal;
+    $('set-falMode').value = s.falMode || 'auto';
+    $('set-falModelPick').value = FAL_MODELS.some((m) => m.id === s.falModel) ? s.falModel : '';
+    // Đánh dấu bộ cài sẵn đang khớp (mọi trường của bộ cài sẵn trùng với cài đặt hiện tại)
+    const match = Object.entries(PRESETS).find(([, p]) =>
+      Object.entries(p).every(([k, v]) => k === 'label' || k === 'imageSize' || s[k] === v));
     presetSel.value = match ? match[0] : '';
     syncLock();
   }
@@ -61,6 +70,28 @@ export function initSettings(ctx) {
     fill();
     log.ok(e.target.checked ? 'ảnh dùng chung khoá với trò chuyện' : 'ảnh dùng khoá riêng');
   });
+  /* ---------- nhà cung cấp tạo ảnh / fal.ai ---------- */
+  FAL_MODELS.forEach((m) => {
+    const o = el('option', '', m.label);
+    o.value = m.id;
+    $('set-falModelPick').appendChild(o);
+  });
+  $('set-imageProvider').addEventListener('change', (e) => {
+    ctx.setSettings({ imageProvider: e.target.value });
+    fill();
+    log.ok(`tạo ảnh dùng ${e.target.value === 'fal' ? 'fal.ai' : 'chuẩn OpenAI'}`);
+  });
+  $('set-falModelPick').addEventListener('change', (e) => {
+    if (!e.target.value) { $('set-falModel').focus(); return; }
+    ctx.setSettings({ falModel: e.target.value });
+    fill();
+    log.ok(`mô hình fal.ai // ${e.target.value}`);
+  });
+  $('set-falMode').addEventListener('change', (e) => {
+    ctx.setSettings({ falMode: e.target.value });
+    log.ok(`cách gọi fal.ai // ${e.target.selectedOptions[0].textContent}`);
+  });
+
   $('set-stream').addEventListener('change', (e) => {
     ctx.setSettings({ stream: e.target.checked });
     log.ok(e.target.checked ? 'đã bật phát trực tiếp' : 'đã tắt phát trực tiếp');
@@ -80,7 +111,7 @@ export function initSettings(ctx) {
   $('set-defaults').addEventListener('click', async () => {
     const ok = await ask('Khôi phục địa chỉ và mô hình về mặc định? (khoá API giữ nguyên)');
     if (!ok) return;
-    const { chatApiKey, imageApiKey, ...rest } = DEFAULT_SETTINGS;
+    const { chatApiKey, imageApiKey, falApiKey, ...rest } = DEFAULT_SETTINGS;
     ctx.setSettings(rest);
     fill();
     log.ok('đã khôi phục mặc định');

@@ -153,16 +153,47 @@
 
       <div class="set-group box">
         <div class="set-head">// TẠO ẢNH</div>
-        <label class="set-row"><span>địa chỉ API</span>
-          <input id="set-imageBaseUrl" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <label class="set-row"><span>mô hình</span>
-          <input id="set-imageModel" class="field" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <label class="check"><input id="set-imageShareKey" type="checkbox"> Dùng chung khoá với trò chuyện</label>
-        <div id="row-imageApiKey" class="set-row"><span>khoá API ảnh</span>
-          <div class="secret">
-            <input id="set-imageApiKey" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá API tạo ảnh">
-            <button type="button" class="btn small" data-toggle-secret="set-imageApiKey">HIỆN</button>
-          </div></div>
+        <label class="set-row"><span>nhà cung cấp</span>
+          <select id="set-imageProvider" class="field select" aria-label="Nhà cung cấp tạo ảnh">
+            <option value="openai">Chuẩn OpenAI</option>
+            <option value="fal">fal.ai</option>
+          </select></label>
+
+        <!-- Chuẩn OpenAI: {địa chỉ}/images/generations -->
+        <div id="img-prov-openai" class="set-sub">
+          <label class="set-row"><span>địa chỉ API</span>
+            <input id="set-imageBaseUrl" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="set-row"><span>mô hình</span>
+            <input id="set-imageModel" class="field" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="check"><input id="set-imageShareKey" type="checkbox"> Dùng chung khoá với trò chuyện</label>
+          <div id="row-imageApiKey" class="set-row"><span>khoá API ảnh</span>
+            <div class="secret">
+              <input id="set-imageApiKey" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá API tạo ảnh">
+              <button type="button" class="btn small" data-toggle-secret="set-imageApiKey">HIỆN</button>
+            </div></div>
+        </div>
+
+        <!-- fal.ai: https://fal.run/<mô hình> hoặc https://queue.fal.run/<mô hình> -->
+        <div id="img-prov-fal" class="set-sub" hidden>
+          <div class="set-row"><span>khoá fal.ai</span>
+            <div class="secret">
+              <input id="set-falApiKey" class="field" type="password" placeholder="KEY_ID:KEY_SECRET" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá fal.ai">
+              <button type="button" class="btn small" data-toggle-secret="set-falApiKey">HIỆN</button>
+            </div></div>
+          <label class="set-row"><span>mô hình có sẵn</span>
+            <select id="set-falModelPick" class="field select" aria-label="Chọn mô hình fal.ai">
+              <option value="">— tự nhập —</option>
+            </select></label>
+          <label class="set-row"><span>mô hình</span>
+            <input id="set-falModel" class="field" type="text" placeholder="fal-ai/flux/schnell" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+          <label class="set-row"><span>cách gọi</span>
+            <select id="set-falMode" class="field select" aria-label="Cách gọi fal.ai">
+              <option value="auto">tự động (hàng đợi cho mô hình chậm)</option>
+              <option value="sync">đồng bộ // fal.run</option>
+              <option value="queue">hàng đợi // queue.fal.run</option>
+            </select></label>
+          <div class="hint">lấy khoá tại fal.ai/dashboard/keys. Khoá chỉ lưu trên máy này.</div>
+        </div>
       </div>
 
       <div class="set-group box">

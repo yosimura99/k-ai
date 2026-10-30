@@ -2,7 +2,7 @@
  * app.js — Điểm khởi động: nạp cài đặt, chuyển tab, đồng hồ, dòng trạng thái,
  * khoá sinh trắc và service worker (PWA).
  */
-import { APP_VERSION } from './config.js';
+import { APP_VERSION, imageKeyOf, imageModelOf } from './config.js';
 import { loadSettings, saveSettings, requestPersist, storageEstimate } from './storage.js';
 import { hms } from './log.js';
 import { initChat } from './chat.js';
@@ -44,8 +44,8 @@ function refreshStatus() {
   }
   const online = navigator.onLine;
   const isImg = tab === 'image';
-  const model = isImg ? settings.imageModel : settings.chatModel;
-  const key = isImg ? (settings.imageShareKey ? settings.chatApiKey : settings.imageApiKey) : settings.chatApiKey;
+  const model = isImg ? imageModelOf(settings) : settings.chatModel;
+  const key = isImg ? imageKeyOf(settings) : settings.chatApiKey;
   const parts = [online ? 'TRỰC TUYẾN' : 'NGOẠI TUYẾN', `MÔ HÌNH: ${model || '?'}`];
   if (!key) parts.push('CHƯA CÓ KHOÁ');
   else parts.push(keyVerified && !isImg ? 'KHOÁ HỢP LỆ' : 'ĐÃ NẠP KHOÁ');

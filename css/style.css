@@ -288,3 +288,7 @@ select option { background: #000; color: var(--green); }
 
 /* Khung ảnh trống thấp hơn để không chiếm cả màn hình */
 .stage.empty { aspect-ratio: auto; height: 38vh; min-height: 180px; }
+
+/* Nhóm ô con theo nhà cung cấp tạo ảnh (chuẩn OpenAI / fal.ai) */
+.set-sub { display: flex; flex-direction: column; gap: 10px; padding-left: 10px; border-left: 1px dashed var(--green-dim); }
+.set-sub[hidden] { display: none; }

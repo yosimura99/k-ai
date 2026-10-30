@@ -10,8 +10,31 @@ Trợ lý AI cá nhân của Khang: **trò chuyện** và **tạo ảnh**, giao 
 3. Vào **CÀI ĐẶT**:
    - Chọn bộ cài sẵn **xAI** hoặc **OpenAI**, hoặc tự nhập địa chỉ API (tương thích OpenAI) và tên mô hình.
    - Nhập **khoá API**. Tạo ảnh có thể **dùng chung khoá với trò chuyện** hoặc dùng khoá riêng.
+   - **TẠO ẢNH → nhà cung cấp**: chọn **Chuẩn OpenAI** (xAI, OpenAI, …) hoặc **fal.ai** (xem bên dưới).
 4. **TRÒ CHUYỆN**: gõ lệnh, `Enter` để gửi, `Shift+Enter` để xuống dòng. **XUẤT NHẬT KÝ** lưu ra `.txt` / `.json`; **XOÁ NHẬT KÝ** xoá lịch sử.
 5. **TẠO ẢNH**: nhập mô tả, chọn kích thước, bấm **TẠO ẢNH**. Ảnh được lưu trong thư viện trên máy; chạm để xem lớn, tải xuống hoặc xoá.
+
+## Tạo ảnh bằng fal.ai
+
+1. Tạo khoá tại <https://fal.ai/dashboard/keys>. Khoá có dạng `KEY_ID:KEY_SECRET`.
+2. **CÀI ĐẶT** → bộ cài sẵn **fal.ai (chỉ tạo ảnh)**, hoặc **TẠO ẢNH → nhà cung cấp → fal.ai**.
+3. Dán khoá vào ô **khoá fal.ai** (khoá riêng, không dùng chung với trò chuyện).
+4. Chọn mô hình có sẵn hoặc tự nhập id mô hình bất kỳ trên fal.ai:
+
+| Mô hình | id |
+|---|---|
+| FLUX.1 [schnell] (mặc định, nhanh) | `fal-ai/flux/schnell` |
+| FLUX.1 [dev] | `fal-ai/flux/dev` |
+| FLUX1.1 [pro] | `fal-ai/flux-pro/v1.1` |
+| Recraft V3 | `fal-ai/recraft/v3/text-to-image` |
+
+5. **Cách gọi**:
+   - **đồng bộ** — `POST https://fal.run/<mô hình>`, chờ trả thẳng kết quả.
+   - **hàng đợi** — `POST https://queue.fal.run/<mô hình>`, rồi thăm dò trạng thái mỗi giây (hiện dòng `[TIN]` vị trí hàng đợi / đang xử lý), xong thì lấy kết quả. Bấm **DỪNG** sẽ huỷ yêu cầu.
+   - **tự động** — schnell gọi đồng bộ, các mô hình chậm hơn dùng hàng đợi.
+
+Kích thước ở tab TẠO ẢNH được đổi sang tên của fal.ai: `1024x1024 → square_hd`, `512x512 / 256x256 → square`, `1024x1536 → portrait_4_3`, `1536x1024 → landscape_4_3`, `1024x1792 → portrait_16_9`, `1792x1024 → landscape_16_9`, `mặc định` → để mô hình tự chọn.
+Yêu cầu gửi `num_images: 1` và `enable_safety_checker: false` với mô hình có tham số này (fal.ai chỉ tôn trọng khi tài khoản được phép). Ảnh trả về (`images[0].url`) được tải về và lưu thành Blob trong IndexedDB nên thư viện xem được khi ngoại tuyến; nếu không tải được thì chỉ lưu đường dẫn.
 
 ## Lời nhắc hệ thống
 
@@ -33,6 +56,7 @@ css/style.css       giao diện terminal
 js/app.js           khởi động, tab, đồng hồ, trạng thái
 js/chat.js          trò chuyện (stream SSE + dự phòng)
 js/image.js         tạo ảnh + thư viện
+js/fal.js           nhà cung cấp fal.ai (đồng bộ + hàng đợi)
 js/settings.js      cài đặt
 js/lock.js          khoá sinh trắc (WebAuthn)
 js/storage.js       localStorage + IndexedDB
