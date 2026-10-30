@@ -3,7 +3,7 @@
  */
 
 /** Phiên bản ứng dụng (hiển thị trong nhật ký khi khởi động). */
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';
 
 /** Khoá lưu trữ trong localStorage. */
 export const LS_KEYS = {
@@ -27,7 +27,11 @@ export const DEFAULT_SETTINGS = {
   imageApiKey: '',
   imageShareKey: true,       // dùng chung khoá với trò chuyện
   imageSize: '',             // '' = để nhà cung cấp tự chọn kích thước
-  imageProvider: 'openai',   // 'openai' = Chuẩn OpenAI (/images/generations) | 'fal' = fal.ai
+  // 'free' = Miễn phí (Pollinations, không cần khoá) | 'openai' = Chuẩn OpenAI (/images/generations) | 'fal' = fal.ai
+  // Người dùng cũ chưa lưu nhà cung cấp → nhận mặc định 'free'; ai đã chọn rồi thì giữ nguyên.
+  imageProvider: 'free',
+  pollModel: 'sana',         // mô hình Pollinations
+  pollApiKey: '',            // khoá Pollinations (không bắt buộc; chỉ cần cho mô hình ngoài 'sana')
   falApiKey: '',             // khoá fal.ai dạng KEY_ID:KEY_SECRET (gửi qua header "Authorization: Key ...")
   falModel: 'fal-ai/flux/schnell',
   falMode: 'auto',           // 'auto' | 'sync' (fal.run) | 'queue' (queue.fal.run + thăm dò trạng thái)
@@ -35,6 +39,13 @@ export const DEFAULT_SETTINGS = {
 
 /** Bộ cài sẵn: điền nhanh các ô cài đặt. */
 export const PRESETS = {
+  // Tạo ảnh miễn phí qua Pollinations; phần trò chuyện giữ nguyên.
+  free: {
+    label: 'Miễn phí (không cần khoá)',
+    imageProvider: 'free',
+    pollModel: 'sana',
+    imageSize: '1024x1024',
+  },
   xai: {
     label: 'xAI (Grok)',
     chatBaseUrl: 'https://api.x.ai/v1',
@@ -90,14 +101,33 @@ export const FAL_SIZE_MAP = {
   '1792x1024': 'landscape_16_9',
 };
 
+/**
+ * Pollinations (kiểm tra 30/10/2026):
+ *  - Không khoá: GET https://image.pollinations.ai/prompt/<mô tả>?width&height&seed&nologo=true
+ *    → máy chủ luôn dùng mô hình 'sana' (DreamShaper 8 LCM), ảnh bị thu nhỏ còn ~0,6 MP.
+ *  - Có khoá (enter.pollinations.ai, gói miễn phí): GET https://gen.pollinations.ai/image/<mô tả>
+ *    với header Authorization: Bearer <khoá> → dùng được các mô hình bên dưới.
+ */
+export const POLL_ANON_URL = 'https://image.pollinations.ai/prompt';
+export const POLL_KEY_URL = 'https://gen.pollinations.ai/image';
+export const POLL_MODELS = [
+  { id: 'sana', label: 'sana // DreamShaper 8 LCM (không cần khoá)', needsKey: false },
+  { id: 'flux', label: 'flux // FLUX.1 schnell (cần khoá)', needsKey: true },
+  { id: 'zimage', label: 'zimage // Z-Image Turbo (cần khoá)', needsKey: true },
+  { id: 'klein', label: 'klein // FLUX.2 klein 4B (cần khoá)', needsKey: true },
+  { id: 'kontext', label: 'kontext // FLUX.1 Kontext pro (cần khoá)', needsKey: true },
+];
+
 /** Khoá API đang dùng cho TẠO ẢNH theo nhà cung cấp. */
 export function imageKeyOf(s) {
+  if (s.imageProvider === 'free') return s.pollApiKey || '';
   if (s.imageProvider === 'fal') return s.falApiKey;
   return s.imageShareKey ? s.chatApiKey : s.imageApiKey;
 }
 
 /** Mô hình đang dùng cho TẠO ẢNH theo nhà cung cấp. */
 export function imageModelOf(s) {
+  if (s.imageProvider === 'free') return s.pollModel || 'sana';
   return s.imageProvider === 'fal' ? s.falModel : s.imageModel;
 }
 

@@ -47,10 +47,11 @@ function refreshStatus() {
   const model = isImg ? imageModelOf(settings) : settings.chatModel;
   const key = isImg ? imageKeyOf(settings) : settings.chatApiKey;
   const parts = [online ? 'TRỰC TUYẾN' : 'NGOẠI TUYẾN', `MÔ HÌNH: ${model || '?'}`];
-  if (!key) parts.push('CHƯA CÓ KHOÁ');
+  if (isImg && settings.imageProvider === 'free') parts.push(key ? 'ĐÃ NẠP KHOÁ' : 'MIỄN PHÍ // KHÔNG CẦN KHOÁ');
+  else if (!key) parts.push('CHƯA CÓ KHOÁ');
   else parts.push(keyVerified && !isImg ? 'KHOÁ HỢP LỆ' : 'ĐÃ NẠP KHOÁ');
   statusEl.textContent = parts.join(' // ');
-  if (!online || !key) statusEl.classList.add('lv-warn');
+  if (!online || (!key && !(isImg && settings.imageProvider === 'free'))) statusEl.classList.add('lv-warn');
 }
 window.addEventListener('online', refreshStatus);
 window.addEventListener('offline', refreshStatus);

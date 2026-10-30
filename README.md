@@ -10,9 +10,20 @@ Trợ lý AI cá nhân của Khang: **trò chuyện** và **tạo ảnh**, giao 
 3. Vào **CÀI ĐẶT**:
    - Chọn bộ cài sẵn **xAI** hoặc **OpenAI**, hoặc tự nhập địa chỉ API (tương thích OpenAI) và tên mô hình.
    - Nhập **khoá API**. Tạo ảnh có thể **dùng chung khoá với trò chuyện** hoặc dùng khoá riêng.
-   - **TẠO ẢNH → nhà cung cấp**: chọn **Chuẩn OpenAI** (xAI, OpenAI, …) hoặc **fal.ai** (xem bên dưới).
+   - **TẠO ẢNH → nhà cung cấp**: chọn **Miễn phí (Pollinations)** (mặc định, không cần khoá), **Chuẩn OpenAI** (xAI, OpenAI, …) hoặc **fal.ai** (xem bên dưới).
 4. **TRÒ CHUYỆN**: gõ lệnh, `Enter` để gửi, `Shift+Enter` để xuống dòng. **XUẤT NHẬT KÝ** lưu ra `.txt` / `.json`; **XOÁ NHẬT KÝ** xoá lịch sử.
 5. **TẠO ẢNH**: nhập mô tả, chọn kích thước, bấm **TẠO ẢNH**. Ảnh được lưu trong thư viện trên máy; chạm để xem lớn, tải xuống hoặc xoá.
+
+## Tạo ảnh miễn phí (Pollinations)
+
+Mặc định cho người dùng mới: không cần khoá, không cần tài khoản. Bộ cài sẵn **Miễn phí (không cần khoá)** trong CÀI ĐẶT đưa về chế độ này. Cài đặt cũ đã lưu giữ nguyên; chỉ khi chưa chọn nhà cung cấp mới tự dùng Pollinations.
+
+- **Không khoá** → `GET https://image.pollinations.ai/prompt/<lời nhắc>?width=&height=&seed=&model=sana&nologo=true&referrer=<tên miền>`. Máy chủ hiện chỉ phục vụ mô hình **sana** (DreamShaper 8 LCM), ảnh bị thu nhỏ còn khoảng 0,6 MP (vd. 1024x1024 → ~776x776), mỗi ảnh ~4–10 giây.
+- **Có khoá** (miễn phí tại <https://enter.pollinations.ai/keys>) → `GET https://gen.pollinations.ai/image/<lời nhắc>` với `Authorization: Bearer <khoá>`, dùng được `flux`, `zimage`, `klein`, `kontext`.
+- Kích thước ở tab TẠO ẢNH được đổi thành `width`/`height`; mỗi yêu cầu dùng một hạt giống ngẫu nhiên.
+- Khi bị giới hạn tốc độ (HTTP 429/503) app ghi `[CẢNH BÁO]`, chờ theo `Retry-After` (mặc định 10 giây) rồi thử lại **một lần**.
+- Ảnh được tải về dạng Blob và lưu vào thư viện IndexedDB.
+- Lưu ý: máy chủ đòi xác minh Turnstile (HTTP 403) với yêu cầu từ `localhost`; chạy từ GitHub Pages thì không. Khi thử cục bộ hãy nhập khoá Pollinations.
 
 ## Tạo ảnh bằng fal.ai
 
@@ -57,6 +68,7 @@ js/app.js           khởi động, tab, đồng hồ, trạng thái
 js/chat.js          trò chuyện (stream SSE + dự phòng)
 js/image.js         tạo ảnh + thư viện
 js/fal.js           nhà cung cấp fal.ai (đồng bộ + hàng đợi)
+js/pollinations.js  nhà cung cấp miễn phí Pollinations
 js/settings.js      cài đặt
 js/lock.js          khoá sinh trắc (WebAuthn)
 js/storage.js       localStorage + IndexedDB

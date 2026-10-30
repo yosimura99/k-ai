@@ -3,7 +3,7 @@
  * bộ cài sẵn, khoá sinh trắc, xoá dữ liệu.
  * Mọi thay đổi được tự động lưu vào localStorage.
  */
-import { PRESETS, DEFAULT_SETTINGS, FAL_MODELS } from './config.js';
+import { PRESETS, DEFAULT_SETTINGS, FAL_MODELS, POLL_MODELS } from './config.js';
 import { createLogger } from './log.js';
 import { el, ask } from './ui.js';
 import { wipeAll } from './storage.js';
@@ -14,7 +14,7 @@ import { wipeAll } from './storage.js';
 export function initSettings(ctx) {
   const $ = (id) => document.getElementById(id);
   const log = createLogger($('set-log'));
-  const fields = ['chatBaseUrl', 'chatModel', 'chatApiKey', 'imageBaseUrl', 'imageModel', 'imageApiKey', 'falApiKey', 'falModel'];
+  const fields = ['chatBaseUrl', 'chatModel', 'chatApiKey', 'imageBaseUrl', 'imageModel', 'imageApiKey', 'falApiKey', 'falModel', 'pollApiKey'];
 
   /* ---------- bộ cài sẵn ---------- */
   const presetSel = $('set-preset');
@@ -41,10 +41,12 @@ export function initSettings(ctx) {
     $('row-imageApiKey').classList.toggle('disabled', !!s.imageShareKey);
     $('set-imageApiKey').disabled = !!s.imageShareKey;
     // Nhà cung cấp tạo ảnh: hiện nhóm ô tương ứng
-    const isFal = s.imageProvider === 'fal';
-    $('set-imageProvider').value = isFal ? 'fal' : 'openai';
-    $('img-prov-openai').hidden = isFal;
-    $('img-prov-fal').hidden = !isFal;
+    const prov = ['free', 'openai', 'fal'].includes(s.imageProvider) ? s.imageProvider : 'free';
+    $('set-imageProvider').value = prov;
+    $('img-prov-free').hidden = prov !== 'free';
+    $('img-prov-openai').hidden = prov !== 'openai';
+    $('img-prov-fal').hidden = prov !== 'fal';
+    $('set-pollModel').value = s.pollModel || 'sana';
     $('set-falMode').value = s.falMode || 'auto';
     $('set-falModelPick').value = FAL_MODELS.some((m) => m.id === s.falModel) ? s.falModel : '';
     // Đánh dấu bộ cài sẵn đang khớp (mọi trường của bộ cài sẵn trùng với cài đặt hiện tại)
@@ -79,7 +81,18 @@ export function initSettings(ctx) {
   $('set-imageProvider').addEventListener('change', (e) => {
     ctx.setSettings({ imageProvider: e.target.value });
     fill();
-    log.ok(`tạo ảnh dùng ${e.target.value === 'fal' ? 'fal.ai' : 'chuẩn OpenAI'}`);
+    log.ok(`tạo ảnh dùng ${{ free: 'miễn phí (Pollinations)', fal: 'fal.ai', openai: 'chuẩn OpenAI' }[e.target.value]}`);
+  });
+  POLL_MODELS.forEach((m) => {
+    const o = el('option', '', m.label);
+    o.value = m.id;
+    $('set-pollModel').appendChild(o);
+  });
+  $('set-pollModel').addEventListener('change', (e) => {
+    ctx.setSettings({ pollModel: e.target.value });
+    const m = POLL_MODELS.find((x) => x.id === e.target.value);
+    if (m?.needsKey && !ctx.getSettings().pollApiKey) log.warn(`mô hình ${m.id} cần khoá Pollinations // không có khoá sẽ dùng sana`);
+    else log.ok(`mô hình miễn phí // ${e.target.value}`);
   });
   $('set-falModelPick').addEventListener('change', (e) => {
     if (!e.target.value) { $('set-falModel').focus(); return; }
@@ -111,7 +124,7 @@ export function initSettings(ctx) {
   $('set-defaults').addEventListener('click', async () => {
     const ok = await ask('Khôi phục địa chỉ và mô hình về mặc định? (khoá API giữ nguyên)');
     if (!ok) return;
-    const { chatApiKey, imageApiKey, falApiKey, ...rest } = DEFAULT_SETTINGS;
+    const { chatApiKey, imageApiKey, falApiKey, pollApiKey, ...rest } = DEFAULT_SETTINGS;
     ctx.setSettings(rest);
     fill();
     log.ok('đã khôi phục mặc định');

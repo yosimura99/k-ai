@@ -155,12 +155,25 @@
         <div class="set-head">// TẠO ẢNH</div>
         <label class="set-row"><span>nhà cung cấp</span>
           <select id="set-imageProvider" class="field select" aria-label="Nhà cung cấp tạo ảnh">
+            <option value="free">Miễn phí (Pollinations)</option>
             <option value="openai">Chuẩn OpenAI</option>
             <option value="fal">fal.ai</option>
           </select></label>
 
+        <!-- Miễn phí: Pollinations (không cần khoá) -->
+        <div id="img-prov-free" class="set-sub">
+          <label class="set-row"><span>mô hình</span>
+            <select id="set-pollModel" class="field select" aria-label="Mô hình Pollinations"></select></label>
+          <div class="set-row"><span>khoá Pollinations (không bắt buộc)</span>
+            <div class="secret">
+              <input id="set-pollApiKey" class="field" type="password" placeholder="để trống = miễn phí, không cần khoá" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá Pollinations">
+              <button type="button" class="btn small" data-toggle-secret="set-pollApiKey">HIỆN</button>
+            </div></div>
+          <div class="hint">không cần khoá: dùng mô hình sana, ảnh ~0,6 MP. Có khoá miễn phí từ enter.pollinations.ai thì dùng được flux, zimage, klein, kontext.</div>
+        </div>
+
         <!-- Chuẩn OpenAI: {địa chỉ}/images/generations -->
-        <div id="img-prov-openai" class="set-sub">
+        <div id="img-prov-openai" class="set-sub" hidden>
           <label class="set-row"><span>địa chỉ API</span>
             <input id="set-imageBaseUrl" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
           <label class="set-row"><span>mô hình</span>

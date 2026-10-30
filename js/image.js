@@ -2,10 +2,11 @@
  * image.js — Tab TẠO ẢNH.
  * Gọi endpoint tạo ảnh tương thích OpenAI: POST {baseUrl}/images/generations
  * Nhận cả `b64_json` lẫn `url`. Ảnh được lưu trong IndexedDB trên máy.
- * Hoặc nhà cung cấp fal.ai (xem fal.js), chọn trong CÀI ĐẶT → TẠO ẢNH → nhà cung cấp.
+ * Hoặc nhà cung cấp miễn phí Pollinations (pollinations.js), fal.ai (fal.js), chọn trong CÀI ĐẶT → TẠO ẢNH → nhà cung cấp.
  */
 import { SLOW_MS, MAX_RETRIES, IMAGE_SIZES, imageKeyOf, imageModelOf } from './config.js';
 import { falGenerate } from './fal.js';
+import { pollGenerate } from './pollinations.js';
 import { putImage, listImages, deleteImage, storageEstimate } from './storage.js';
 import { createLogger, describeHttpError, readErrorDetail, secs } from './log.js';
 import { el, ask, downloadBlob, sleep, joinUrl } from './ui.js';
@@ -283,13 +284,22 @@ export function initImage(ctx) {
     await attachFromUrl(rec, out.url, signal);
   }
 
+  /** Nhà cung cấp miễn phí Pollinations: phản hồi là chính tấm ảnh. */
+  async function generateFree(s, key, prompt, rec, signal) {
+    const out = await pollGenerate({ model: s.pollModel, key, prompt, size: sizeSel.value, signal, log });
+    rec.size = out.size;
+    rec.seed = out.seed;
+    rec.blob = out.blob;
+  }
+
   async function generate() {
     const prompt = promptEl.value.trim();
     if (!prompt) { log.warn('chưa nhập mô tả ảnh'); return; }
     const s = ctx.getSettings();
     const isFal = s.imageProvider === 'fal';
+    const isFree = s.imageProvider === 'free';
     const key = imageKeyOf(s);
-    if (!key) {
+    if (!key && !isFree) {
       log.warn(isFal ? 'chưa có khoá fal.ai // vào CÀI ĐẶT để nhập khoá (dạng KEY_ID:KEY_SECRET)' : 'chưa có khoá API tạo ảnh // vào CÀI ĐẶT để nhập khoá');
       ctx.setStatusLine('[CẢNH BÁO] CHƯA CÓ KHOÁ API TẠO ẢNH', 'warn');
       return;
@@ -307,9 +317,10 @@ export function initImage(ctx) {
     try {
       const rec = {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-        prompt, model: imageModelOf(s), provider: isFal ? 'fal' : 'openai', size: '', createdAt: Date.now(),
+        prompt, model: imageModelOf(s), provider: s.imageProvider || 'free', size: '', createdAt: Date.now(),
       };
-      if (isFal) await generateFal(s, key, prompt, rec, controller.signal);
+      if (isFree) await generateFree(s, key, prompt, rec, controller.signal);
+      else if (isFal) await generateFal(s, key, prompt, rec, controller.signal);
       else await generateOpenAI(s, key, prompt, rec, controller.signal);
       try {
         await putImage(rec);
@@ -329,6 +340,9 @@ export function initImage(ctx) {
       else {
         log.error(e.message || String(e));
         if (/hết số dư/.test(e.message)) ctx.setStatusLine('[LỖI] TÀI KHOẢN FAL.AI HẾT SỐ DƯ', 'error');
+        else if (e.status === 429 || e.status === 503) ctx.setStatusLine('[CẢNH BÁO] MÁY CHỦ MIỄN PHÍ ĐANG BẬN', 'warn');
+        else if (e.turnstile) ctx.setStatusLine('[LỖI] MÁY CHỦ MIỄN PHÍ ĐÒI XÁC MINH // CẦN KHOÁ POLLINATIONS', 'error');
+        else if (e.free && (e.status === 401 || e.status === 403)) ctx.setStatusLine('[LỖI] MÔ HÌNH NÀY CẦN KHOÁ POLLINATIONS', 'error');
         else if (e.status === 401 || e.status === 403) ctx.setStatusLine('[LỖI] KHOÁ API TẠO ẢNH SAI HOẶC HẾT HẠN', 'error');
       }
     } finally {
