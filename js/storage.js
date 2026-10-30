@@ -50,6 +50,35 @@ export function clearHistory() {
   localStorage.removeItem(LS_KEYS.history);
 }
 
+/**
+ * Các cuộc trò chuyện (bản 2): mảng { id, title, createdAt, updatedAt, messages: [...] }.
+ * Lần đầu mở bản 2: lịch sử bản 1.x (một cuộc duy nhất) được chuyển thành một cuộc trò chuyện.
+ */
+export function loadChats() {
+  let chats = readJSON(LS_KEYS.chats, null);
+  if (!Array.isArray(chats)) {
+    chats = [];
+    const old = loadHistory();
+    if (old.length) {
+      const first = old.find((m) => m.role === 'user');
+      const t0 = old[0].t || Date.now();
+      chats.push({
+        id: `c${t0}`,
+        title: (first?.content || 'Cuộc trò chuyện cũ').slice(0, 60),
+        createdAt: t0,
+        updatedAt: old[old.length - 1].t || t0,
+        messages: old.map(({ role, content, t }) => ({ role, content, t })),
+      });
+    }
+    writeJSON(LS_KEYS.chats, chats);
+  }
+  return chats.filter((c) => c && Array.isArray(c.messages));
+}
+
+export function saveChats(chats) {
+  return writeJSON(LS_KEYS.chats, chats);
+}
+
 /* ---------------- IndexedDB (ảnh) ---------------- */
 
 let dbPromise = null;

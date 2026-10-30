@@ -1,20 +1,24 @@
 /**
- * settings.js — Tab CÀI ĐẶT: địa chỉ API, mô hình, khoá, nhà cung cấp ảnh (chuẩn OpenAI / fal.ai),
- * bộ cài sẵn, khoá sinh trắc, xoá dữ liệu.
+ * settings.js — Trang CÀI ĐẶT (bảng trượt toàn màn hình trên điện thoại, hộp giữa màn hình trên máy tính):
+ * địa chỉ API, hai mô hình Nhanh / Chuyên gia, khoá, nhà cung cấp ảnh (miễn phí / fal.ai / chuẩn OpenAI),
+ * bộ cài sẵn, khoá sinh trắc, xuất / xoá dữ liệu.
  * Mọi thay đổi được tự động lưu vào localStorage.
  */
-import { PRESETS, DEFAULT_SETTINGS, FAL_MODELS, POLL_MODELS } from './config.js';
-import { createLogger } from './log.js';
-import { el, ask } from './ui.js';
-import { wipeAll } from './storage.js';
+import { APP_VERSION, PRESETS, DEFAULT_SETTINGS, FAL_MODELS, POLL_MODELS } from './config.js';
+import { el, ask, toast, setIcon, downloadBlob, fileStamp } from './ui.js';
+import { wipeAll, storageEstimate } from './storage.js';
+import { SYSTEM_PROMPT } from '../system-prompt.js';
 
 /**
- * @param {object} ctx { getSettings, setSettings(patch), lock }
+ * @param {object} ctx { getSettings, setSettings(patch), lock, chat, image }
  */
 export function initSettings(ctx) {
   const $ = (id) => document.getElementById(id);
-  const log = createLogger($('set-log'));
-  const fields = ['chatBaseUrl', 'chatModel', 'chatApiKey', 'imageBaseUrl', 'imageModel', 'imageApiKey', 'falApiKey', 'falModel', 'pollApiKey'];
+  const sheet = $('settings');
+  // Thông báo ngắn thay cho nhật ký kiểu terminal
+  const cap = (t) => String(t).replace(/\s+\/\/\s+/g, ' — ').replace(/^./, (c) => c.toUpperCase());
+  const log = { ok: (t) => toast(cap(t), 'ok'), info: (t) => toast(cap(t)), warn: (t) => toast(cap(t), 'warn', 3500), error: (t) => toast(cap(t), 'error', 4000) };
+  const fields = ['chatBaseUrl', 'chatModel', 'chatModelExpert', 'chatApiKey', 'imageBaseUrl', 'imageModel', 'imageApiKey', 'falApiKey', 'falModel', 'pollApiKey'];
 
   /* ---------- bộ cài sẵn ---------- */
   const presetSel = $('set-preset');
@@ -38,6 +42,7 @@ export function initSettings(ctx) {
     fields.forEach((f) => { $(`set-${f}`).value = s[f] || ''; });
     $('set-imageShareKey').checked = !!s.imageShareKey;
     $('set-stream').checked = !!s.stream;
+    $('set-vision').checked = !!s.vision;
     $('row-imageApiKey').classList.toggle('disabled', !!s.imageShareKey);
     $('set-imageApiKey').disabled = !!s.imageShareKey;
     // Nhà cung cấp tạo ảnh: hiện nhóm ô tương ứng
@@ -51,7 +56,7 @@ export function initSettings(ctx) {
     $('set-falModelPick').value = FAL_MODELS.some((m) => m.id === s.falModel) ? s.falModel : '';
     // Đánh dấu bộ cài sẵn đang khớp (mọi trường của bộ cài sẵn trùng với cài đặt hiện tại)
     const match = Object.entries(PRESETS).find(([, p]) =>
-      Object.entries(p).every(([k, v]) => k === 'label' || k === 'imageSize' || s[k] === v));
+      Object.entries(p).every(([k, v]) => k === 'label' || s[k] === v));
     presetSel.value = match ? match[0] : '';
     syncLock();
   }
@@ -62,7 +67,6 @@ export function initSettings(ctx) {
     input.addEventListener('input', () => ctx.setSettings({ [f]: input.value.trim() }, { quiet: true }));
     input.addEventListener('change', () => {
       ctx.setSettings({ [f]: input.value.trim() });
-      log.ok('đã lưu cài đặt');
       fill();
     });
   });
@@ -109,6 +113,10 @@ export function initSettings(ctx) {
     ctx.setSettings({ stream: e.target.checked });
     log.ok(e.target.checked ? 'đã bật phát trực tiếp' : 'đã tắt phát trực tiếp');
   });
+  $('set-vision').addEventListener('change', (e) => {
+    ctx.setSettings({ vision: e.target.checked });
+    log.ok(e.target.checked ? 'đã hiện nút đính kèm ảnh' : 'đã ẩn nút đính kèm ảnh');
+  });
 
   /* ---------- hiện / ẩn khoá ---------- */
   document.querySelectorAll('[data-toggle-secret]').forEach((btn) => {
@@ -116,7 +124,8 @@ export function initSettings(ctx) {
       const input = $(btn.dataset.toggleSecret);
       const show = input.type === 'password';
       input.type = show ? 'text' : 'password';
-      btn.textContent = show ? 'ẨN' : 'HIỆN';
+      setIcon(btn, show ? 'eye-off' : 'eye');
+      btn.setAttribute('aria-label', show ? 'Ẩn khoá' : 'Hiện khoá');
     });
   });
 
@@ -134,7 +143,7 @@ export function initSettings(ctx) {
   const lockToggle = $('set-lock');
   function syncLock() {
     lockToggle.checked = ctx.lock.isEnabled();
-    $('set-lock-state').textContent = ctx.lock.hasCredential() ? 'đã thiết lập' : 'chưa thiết lập';
+    $('set-lock-state').textContent = ctx.lock.hasCredential() ? 'Đã thiết lập trên thiết bị này' : 'Chưa thiết lập';
   }
   lockToggle.addEventListener('change', async () => {
     if (lockToggle.checked) {
@@ -149,8 +158,8 @@ export function initSettings(ctx) {
   });
   $('set-lock-reset').addEventListener('click', async () => {
     const ok = await ask('Đặt lại khoá sinh trắc? Bạn sẽ thiết lập lại ở lần mở tiếp theo.', [
-      { label: 'ĐẶT LẠI', value: true, danger: true },
-      { label: 'HUỶ', value: false },
+      { label: 'Đặt lại', value: true, danger: true },
+      { label: 'Huỷ', value: false },
     ]);
     if (!ok) return;
     ctx.lock.reset();
@@ -160,9 +169,9 @@ export function initSettings(ctx) {
 
   /* ---------- xoá toàn bộ dữ liệu ---------- */
   $('set-wipe').addEventListener('click', async () => {
-    const ok = await ask('XOÁ TOÀN BỘ dữ liệu trên máy: cài đặt, khoá API, nhật ký, ảnh, khoá sinh trắc. Không thể hoàn tác.', [
-      { label: 'XOÁ HẾT', value: true, danger: true },
-      { label: 'HUỶ', value: false },
+    const ok = await ask('Xoá toàn bộ dữ liệu trên máy: cài đặt, khoá API, lịch sử trò chuyện, ảnh, khoá sinh trắc. Không thể hoàn tác.', [
+      { label: 'Xoá hết', value: true, danger: true },
+      { label: 'Huỷ', value: false },
     ]);
     if (!ok) return;
     ctx.lock.reset();
@@ -170,6 +179,58 @@ export function initSettings(ctx) {
     location.reload();
   });
 
+  /* ---------- lịch sử trò chuyện ---------- */
+  $('set-export').addEventListener('click', () => {
+    const chats = ctx.chat.exportAll();
+    if (!chats.length) { log.warn('chưa có cuộc trò chuyện nào để xuất'); return; }
+    const name = `kai-lichsu-${fileStamp()}.json`;
+    downloadBlob(new Blob([JSON.stringify({
+      app: 'K.AI', phienBan: APP_VERSION, xuatLuc: new Date().toISOString(),
+      loiNhacHeThong: SYSTEM_PROMPT, cuocTroChuyen: chats,
+    }, null, 2)], { type: 'application/json' }), name);
+    log.ok(`đã xuất ${name}`);
+  });
+  $('set-clear-chats').addEventListener('click', async () => {
+    const ok = await ask('Xoá toàn bộ lịch sử trò chuyện? Không thể hoàn tác.', [
+      { label: 'Xoá', value: true, danger: true },
+      { label: 'Huỷ', value: false },
+    ]);
+    if (!ok) return;
+    ctx.chat.clearAll();
+    log.ok('đã xoá lịch sử trò chuyện');
+  });
+
+  async function showStorage() {
+    const est = await storageEstimate();
+    const n = ctx.chat.list().length;
+    let t = `${n} cuộc trò chuyện`;
+    if (est && est.usage != null) t += ` · đã dùng ${(est.usage / 1048576).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} MB bộ nhớ máy`;
+    $('set-storage').textContent = t;
+  }
+
+  /* ---------- mở / đóng ---------- */
+  let lastFocus = null;
+  function open(section) {
+    fill();
+    showStorage();
+    lastFocus = document.activeElement;
+    sheet.hidden = false;
+    requestAnimationFrame(() => sheet.classList.add('show'));
+    if (section) $(`sec-${section}`)?.scrollIntoView({ block: 'start' });
+    else sheet.querySelector('.sheet-body').scrollTop = 0;
+    sheet.querySelector('.sheet-box').focus({ preventScroll: true });
+  }
+  function close() {
+    sheet.classList.remove('show');
+    setTimeout(() => { sheet.hidden = true; }, 200);
+    ctx.onClose?.();
+    lastFocus?.focus?.({ preventScroll: true });
+  }
+  $('settings-close').addEventListener('click', close);
+  sheet.addEventListener('click', (e) => { if (e.target === sheet) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !sheet.hidden && !document.querySelector('.modal')) close(); });
+
+  $('set-version').textContent = `phiên bản ${APP_VERSION}`;
   fill();
-  return { log, fill };
+  return { fill, open, close, get isOpen() { return !sheet.hidden; } };
 }

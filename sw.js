@@ -3,7 +3,7 @@
  * KHÔNG BAO GIỜ lưu đệm lời gọi API: chỉ xử lý yêu cầu GET cùng nguồn (same-origin).
  * Đổi CACHE khi phát hành bản mới để trình duyệt nạp lại tệp.
  */
-const CACHE = 'kai-shell-v6';
+const CACHE = 'kai-shell-v7';
 const SHELL = [
   './',
   './index.html',
@@ -21,6 +21,10 @@ const SHELL = [
   './js/pollinations.js',
   './js/settings.js',
   './js/lock.js',
+  './js/md.js',
+  './js/speech.js',
+  './icons/icon-32.png',
+  './icons/icon-180.png',
   './icons/icon-64.png',
   './icons/icon-192.png',
   './icons/icon-512.png',

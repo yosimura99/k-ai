@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <title>K.AI</title>
   <meta name="description" content="K.AI — trợ lý AI cá nhân: trò chuyện và tạo ảnh.">
   <meta name="theme-color" content="#000000">
@@ -21,25 +21,63 @@
   <script type="module" src="js/app.js"></script>
 </head>
 <body class="locked" data-tab="chat">
+  <!-- Bộ biểu tượng (dùng: <svg><use href="#i-ten"/></svg>) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 8h16M4 16h10"/></symbol>
+    <symbol id="i-ghost" viewBox="0 0 24 24"><path d="M5 20V11a7 7 0 0 1 14 0v9l-2.3-1.6L14.3 20 12 18.4 9.7 20l-2.4-1.6Z"/><circle cx="9.5" cy="11" r=".6"/><circle cx="14.5" cy="11" r=".6"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></symbol>
+    <symbol id="i-wave" viewBox="0 0 24 24"><path d="M4 10v4M8 6v12M12 9v6M16 4v16M20 10v4"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7Z"/></symbol>
+    <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 6 1V5a3 3 0 0 0-3-1Zm6 0a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-6 1"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12Z"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></symbol>
+    <symbol id="i-news" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 8h10M7 12h10M7 16h6"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="3"/><path d="M5 15V6a3 3 0 0 1 3-3h7"/></symbol>
+    <symbol id="i-redo" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v13M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></symbol>
+    <symbol id="i-speaker" viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></symbol>
+    <symbol id="i-side" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="3"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5v.01"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></symbol>
+    <symbol id="i-heart-fill" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z" fill="currentColor"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8Z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7Z"/></symbol>
+    <symbol id="i-square" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="2"/></symbol>
+    <symbol id="i-portrait" viewBox="0 0 24 24"><rect x="6.5" y="4" width="11" height="16" rx="2"/></symbol>
+    <symbol id="i-landscape" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="2"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M3 3l18 18M10.6 5.1A10 10 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4M6.6 6.6A17 17 0 0 0 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-k" viewBox="188.5 135 745 745"><polygon points="255,220 458,135 446,395 476,395 625,215 815,158 605,440 900,880 680,795 490,540 462,540 438,565 432,712 222,870 270,560 288,262" fill="currentColor" stroke="none"/></symbol>
+  </svg>
 
   <!-- ================= MÀN HÌNH KHOÁ SINH TRẮC ================= -->
   <section id="lock" class="lock" aria-label="Khoá sinh trắc">
     <div class="lock-inner">
-      <img class="lock-logo" src="icons/icon-192.png" alt="K.AI" width="72" height="72">
-      <div class="lock-title">K.AI // XÁC THỰC SINH TRẮC</div>
-
+      <div class="lock-brand"><svg class="k-mark" aria-hidden="true"><use href="#i-k"/></svg><span>K.AI</span></div>
       <div id="lock-scanner" class="scanner" data-phase="idle" aria-hidden="true">
         <!-- Quét khuôn mặt: khung dây + điểm lưới + vạch quét -->
         <svg class="scan-face" viewBox="0 0 200 240">
           <defs>
             <clipPath id="faceClip"><path d="M100 18 C150 18 172 58 170 108 C168 160 140 214 100 222 C60 214 32 160 30 108 C28 58 50 18 100 18 Z"/></clipPath>
             <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#3ddc84" stop-opacity="0"/>
-              <stop offset="0.85" stop-color="#3ddc84" stop-opacity="0.35"/>
-              <stop offset="1" stop-color="#7dffb3" stop-opacity="1"/>
+              <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+              <stop offset="0.85" stop-color="#ffffff" stop-opacity="0.35"/>
+              <stop offset="1" stop-color="#ffffff" stop-opacity="1"/>
             </linearGradient>
             <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
-              <circle cx="7" cy="7" r="1.2" fill="#3ddc84"/>
+              <circle cx="7" cy="7" r="1.2" fill="#ffffff"/>
             </pattern>
           </defs>
           <!-- góc khung -->
@@ -76,158 +114,214 @@
     </div>
   </section>
 
-  <!-- ================= ỨNG DỤNG ================= -->
-  <div class="app">
-    <header class="header">
-      <div class="top">
-        <span class="host">
-          <img class="logo" src="icons/icon-64.png" alt="K.AI" width="20" height="20">
-          GỐC@IPHONE<span class="dot" aria-hidden="true"></span>MÁY.NỘI.BỘ
-        </span>
-        <span id="clock" class="clock">--:--:--</span>
+  <div class="app" id="app">
+    <!-- ================= THANH BÊN (máy tính) / NGĂN KÉO (điện thoại) ================= -->
+    <aside id="sidebar" class="sidebar" aria-label="Thanh bên">
+      <div class="side-head">
+        <div class="brand"><svg class="k-mark" aria-hidden="true"><use href="#i-k"/></svg><span>K.AI</span></div>
+        <button type="button" class="icon-btn sm muted" id="side-toggle" aria-label="Thu gọn thanh bên" title="Thu gọn thanh bên"><svg aria-hidden="true"><use href="#i-side"/></svg></button>
       </div>
-      <div id="status" class="status">ĐANG KHỞI ĐỘNG...</div>
-      <nav class="tabs" role="tablist">
-        <button type="button" class="tab on" data-tab-btn="chat" role="tab">TRÒ CHUYỆN</button>
-        <button type="button" class="tab" data-tab-btn="image" role="tab">TẠO ẢNH</button>
-        <button type="button" class="tab" data-tab-btn="settings" role="tab">CÀI ĐẶT</button>
+      <label class="searchbox"><svg aria-hidden="true"><use href="#i-search"/></svg><input id="side-search" type="search" placeholder="Tìm kiếm" autocomplete="off" enterkeyhint="search" aria-label="Tìm trong lịch sử"><kbd>Ctrl+K</kbd></label>
+      <nav class="nav">
+        <a href="#" id="nav-new"><svg aria-hidden="true"><use href="#i-edit"/></svg><span>Cuộc trò chuyện mới</span></a>
+        <a href="#" data-nav="chat"><svg aria-hidden="true"><use href="#i-chat"/></svg><span>Trò chuyện</span></a>
+        <a href="#" data-nav="image"><svg aria-hidden="true"><use href="#i-image"/></svg><span>Hình ảnh</span></a>
       </nav>
-    </header>
+      <div class="sec">Lịch sử</div>
+      <div id="hist" class="hist"></div>
+      <div class="me">
+        <div class="avatar">K</div><span class="me-name">Khang</span>
+        <button type="button" class="icon-btn sm" id="open-settings" aria-label="Cài đặt" title="Cài đặt"><svg aria-hidden="true"><use href="#i-gear"/></svg></button>
+      </div>
+    </aside>
+    <div id="scrim" class="scrim" hidden></div>
 
-    <!-- ---------- TRÒ CHUYỆN ---------- -->
-    <main class="panel panel-chat" data-panel="chat">
-      <div id="chat-log" class="box terminal" aria-live="polite"><div id="chat-idle" class="idle"><span class="idle-time"></span><span class="idle-text">đang chờ lệnh</span> <span class="cursor"></span></div></div>
-      <div class="input-row">
-        <textarea id="chat-input" class="field" rows="1" placeholder="> nhập lệnh..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" aria-label="Nhập tin nhắn"></textarea>
-        <button id="chat-send" type="button" class="btn">GỬI</button>
-      </div>
-      <div class="grid2">
-        <button id="chat-export" type="button" class="btn">XUẤT NHẬT KÝ</button>
-        <button id="chat-clear" type="button" class="btn btn-red">XOÁ NHẬT KÝ</button>
-      </div>
+    <main class="main">
+      <header class="topbar">
+        <button type="button" class="icon-btn" id="menu-btn" aria-label="Mở menu" title="Menu"><svg aria-hidden="true"><use href="#i-menu"/></svg></button>
+        <nav class="tabs" role="tablist">
+          <button type="button" role="tab" data-tab-btn="chat" class="on" aria-selected="true">Hỏi</button>
+          <button type="button" role="tab" data-tab-btn="image" aria-selected="false">Tạo ảnh</button>
+        </nav>
+        <div class="top-right">
+          <button type="button" class="icon-btn" id="temp-btn" aria-pressed="false" aria-label="Trò chuyện tạm thời" title="Trò chuyện tạm thời (không lưu)"><svg aria-hidden="true"><use href="#i-ghost"/></svg></button>
+          <button type="button" class="pill-btn desk-only" id="share-btn"><svg aria-hidden="true"><use href="#i-share"/></svg><span>Chia sẻ</span></button>
+          <button type="button" class="icon-btn desk-only" id="new-btn" aria-label="Cuộc trò chuyện mới" title="Cuộc trò chuyện mới"><svg aria-hidden="true"><use href="#i-edit"/></svg></button>
+        </div>
+      </header>
+
+      <!-- ================= HỎI ================= -->
+      <section class="panel panel-chat is-empty" id="panel-chat" data-panel="chat">
+        <div class="thread-scroll" id="thread-scroll">
+          <div class="thread" id="thread" aria-live="polite"></div>
+          <div class="empty" id="chat-empty">
+            <div class="brandmark"><svg class="k-mark big" aria-hidden="true"><use href="#i-k"/></svg><span class="wordmark">K.AI</span></div>
+            <div class="sub" id="empty-sub" hidden></div>
+          </div>
+        </div>
+        <div class="composer-wrap">
+          <div class="composer">
+            <div class="attachments" id="chat-attachments" hidden></div>
+            <textarea id="chat-input" rows="1" placeholder="Hỏi bất cứ điều gì" aria-label="Tin nhắn" enterkeyhint="enter"></textarea>
+            <div class="row">
+              <button type="button" class="icon-btn" id="chat-attach" aria-label="Đính kèm ảnh" title="Đính kèm ảnh"><svg aria-hidden="true"><use href="#i-clip"/></svg></button>
+              <input type="file" id="chat-file" accept="image/*" multiple hidden>
+              <button type="button" class="mode" id="mode-btn" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-bolt"/></svg><span class="mode-label">Nhanh</span><svg aria-hidden="true" class="caret"><use href="#i-down"/></svg></button>
+              <span class="spacer"></span>
+              <button type="button" class="icon-btn" id="chat-mic" aria-label="Nói để nhập" title="Nói để nhập"><svg aria-hidden="true"><use href="#i-mic"/></svg></button>
+              <button type="button" class="send" id="chat-send" aria-label="Gửi" title="Gửi" disabled><svg aria-hidden="true"><use href="#i-up"/></svg></button>
+            </div>
+          </div>
+          <div class="quick" id="chips">
+            <button type="button" class="qchip" data-chip="image"><svg aria-hidden="true"><use href="#i-image"/></svg><span>Tạo ảnh</span></button>
+            <button type="button" class="qchip" data-chip="news" data-prefill="Tóm tắt những tin tức công nghệ đáng chú ý nhất tuần này."><svg aria-hidden="true"><use href="#i-news"/></svg><span>Tin tức</span></button>
+            <button type="button" class="qchip" data-chip="voice"><svg aria-hidden="true"><use href="#i-wave"/></svg><span>Giọng nói</span></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TẠO ẢNH ================= -->
+      <section class="panel panel-image" id="panel-image" data-panel="image" hidden>
+        <div class="img-scroll" id="img-scroll">
+          <div class="filters" id="img-filters">
+            <button type="button" class="filter on" data-filter="mine">Ảnh của tôi <span class="count"></span></button>
+            <button type="button" class="filter" data-filter="fav">Yêu thích <span class="count"></span></button>
+          </div>
+          <div class="masonry" id="img-grid"></div>
+          <div class="img-empty" id="img-empty" hidden>
+            <svg aria-hidden="true"><use href="#i-image"/></svg>
+            <div class="img-empty-title">Chưa có ảnh nào</div>
+            <div class="img-empty-sub">Nhập mô tả bên dưới để tạo ảnh đầu tiên.</div>
+          </div>
+        </div>
+        <div class="composer-wrap">
+          <div class="img-status" id="img-status" role="status" hidden></div>
+          <div class="composer">
+            <textarea id="img-prompt" rows="1" placeholder="Mô tả ảnh bạn muốn tạo" aria-label="Mô tả ảnh" enterkeyhint="enter"></textarea>
+            <div class="row">
+              <button type="button" class="mode" id="prov-btn" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-spark"/></svg><span class="pill-label">Miễn phí</span><svg aria-hidden="true" class="caret"><use href="#i-down"/></svg></button>
+              <button type="button" class="mode" id="ratio-btn" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-square"/></svg><span class="pill-label">1:1</span><svg aria-hidden="true" class="caret"><use href="#i-down"/></svg></button>
+              <span class="spacer"></span>
+              <button type="button" class="icon-btn" id="img-mic" aria-label="Nói để nhập" title="Nói để nhập"><svg aria-hidden="true"><use href="#i-mic"/></svg></button>
+              <button type="button" class="send" id="img-send" aria-label="Tạo ảnh" title="Tạo ảnh" disabled><svg aria-hidden="true"><use href="#i-up"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </section>
     </main>
+  </div>
 
-    <!-- ---------- TẠO ẢNH ---------- -->
-    <main class="panel panel-image scroll" data-panel="image" hidden>
-      <label class="prompt-box box">
-        <span class="prompt-label">&gt; mô tả ảnh:</span>
-        <textarea id="img-prompt" rows="3" placeholder="thành phố cyberpunk về đêm, mưa, đèn neon xanh lá, góc nhìn từ trên cao" spellcheck="false" aria-label="Mô tả ảnh"></textarea>
-      </label>
-      <div class="size-row">
-        <span>// kích thước</span>
-        <select id="img-size" class="field select" aria-label="Kích thước ảnh"></select>
+  <!-- ================= CÀI ĐẶT ================= -->
+  <div id="settings" class="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="sheet-box" tabindex="-1">
+      <header class="sheet-head">
+        <h2 id="settings-title">Cài đặt</h2>
+        <button type="button" class="icon-btn" id="settings-close" aria-label="Đóng"><svg aria-hidden="true"><use href="#i-x"/></svg></button>
+      </header>
+      <div class="sheet-body">
+
+        <section class="set-sec" id="sec-chat">
+          <h3>Trò chuyện</h3>
+          <div class="card">
+            <label class="field"><span>Bộ cài sẵn</span>
+              <select id="set-preset"><option value="">— Tuỳ chỉnh —</option></select>
+            </label>
+            <label class="field"><span>Địa chỉ API</span>
+              <input id="set-chatBaseUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="https://api.x.ai/v1">
+            </label>
+            <label class="field"><span>Mô hình “Nhanh”</span>
+              <input id="set-chatModel" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="grok-4.20-0309-non-reasoning">
+            </label>
+            <label class="field"><span>Mô hình “Chuyên gia”</span>
+              <input id="set-chatModelExpert" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="grok-4.20-0309-reasoning">
+            </label>
+            <label class="field"><span>Khoá API</span>
+              <div class="secret"><input id="set-chatApiKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="xai-… / sk-…"><button type="button" class="icon-btn sm" data-toggle-secret="set-chatApiKey" aria-label="Hiện khoá"><svg aria-hidden="true"><use href="#i-eye"/></svg></button></div>
+            </label>
+            <label class="switch-row"><span><b>Phát trực tiếp</b><small>Hiện chữ ngay khi mô hình đang trả lời</small></span>
+              <input id="set-stream" type="checkbox" role="switch"><i class="switch"></i></label>
+            <label class="switch-row"><span><b>Đính kèm ảnh</b><small>Hiện nút ghim để gửi ảnh cho mô hình đọc được ảnh</small></span>
+              <input id="set-vision" type="checkbox" role="switch"><i class="switch"></i></label>
+          </div>
+        </section>
+
+        <section class="set-sec" id="sec-image">
+          <h3>Tạo ảnh</h3>
+          <div class="card">
+            <label class="field"><span>Nhà cung cấp</span>
+              <select id="set-imageProvider">
+                <option value="free">Miễn phí (Pollinations)</option>
+                <option value="fal">fal.ai</option>
+                <option value="openai">Chuẩn OpenAI</option>
+              </select>
+            </label>
+            <div id="img-prov-free">
+              <label class="field"><span>Mô hình miễn phí</span><select id="set-pollModel"></select></label>
+              <label class="field"><span>Khoá Pollinations (không bắt buộc)</span>
+                <div class="secret"><input id="set-pollApiKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="sk_… / pk_…"><button type="button" class="icon-btn sm" data-toggle-secret="set-pollApiKey" aria-label="Hiện khoá"><svg aria-hidden="true"><use href="#i-eye"/></svg></button></div>
+              </label>
+            </div>
+            <div id="img-prov-fal" hidden>
+              <label class="field"><span>Khoá fal.ai</span>
+                <div class="secret"><input id="set-falApiKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="KEY_ID:KEY_SECRET"><button type="button" class="icon-btn sm" data-toggle-secret="set-falApiKey" aria-label="Hiện khoá"><svg aria-hidden="true"><use href="#i-eye"/></svg></button></div>
+              </label>
+              <label class="field"><span>Mô hình</span><select id="set-falModelPick"><option value="">— Tự nhập —</option></select></label>
+              <label class="field"><span>Mã mô hình</span>
+                <input id="set-falModel" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="fal-ai/flux/schnell">
+              </label>
+              <label class="field"><span>Cách gọi</span>
+                <select id="set-falMode">
+                  <option value="auto">Tự động (mô hình chậm dùng hàng đợi)</option>
+                  <option value="sync">Đồng bộ (fal.run)</option>
+                  <option value="queue">Hàng đợi (queue.fal.run)</option>
+                </select>
+              </label>
+            </div>
+            <div id="img-prov-openai" hidden>
+              <label class="field"><span>Địa chỉ API</span>
+                <input id="set-imageBaseUrl" type="url" inputmode="url" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="https://api.openai.com/v1">
+              </label>
+              <label class="field"><span>Mô hình</span>
+                <input id="set-imageModel" type="text" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="gpt-image-1">
+              </label>
+              <label class="switch-row"><span><b>Dùng chung khoá trò chuyện</b><small>Không cần nhập khoá riêng cho ảnh</small></span>
+                <input id="set-imageShareKey" type="checkbox" role="switch"><i class="switch"></i></label>
+              <label class="field" id="row-imageApiKey"><span>Khoá API tạo ảnh</span>
+                <div class="secret"><input id="set-imageApiKey" type="password" autocomplete="off" spellcheck="false" autocapitalize="off" placeholder="sk-…"><button type="button" class="icon-btn sm" data-toggle-secret="set-imageApiKey" aria-label="Hiện khoá"><svg aria-hidden="true"><use href="#i-eye"/></svg></button></div>
+              </label>
+            </div>
+          </div>
+        </section>
+
+        <section class="set-sec" id="sec-lock">
+          <h3>Bảo mật</h3>
+          <div class="card">
+            <label class="switch-row"><span><b>Khoá Face ID / Touch ID</b><small id="set-lock-state">chưa thiết lập</small></span>
+              <input id="set-lock" type="checkbox" role="switch"><i class="switch"></i></label>
+            <button type="button" class="row-btn" id="set-lock-reset">Đặt lại khoá sinh trắc</button>
+          </div>
+        </section>
+
+        <section class="set-sec" id="sec-data">
+          <h3>Dữ liệu</h3>
+          <div class="card">
+            <button type="button" class="row-btn" id="set-export">Xuất lịch sử trò chuyện (.json)</button>
+            <button type="button" class="row-btn" id="set-clear-chats">Xoá lịch sử trò chuyện</button>
+            <button type="button" class="row-btn" id="set-defaults">Khôi phục địa chỉ và mô hình mặc định</button>
+            <button type="button" class="row-btn danger" id="set-wipe">Xoá toàn bộ dữ liệu trên máy</button>
+            <div class="card-note" id="set-storage"></div>
+          </div>
+        </section>
+
+        <section class="set-sec" id="sec-about">
+          <h3>Giới thiệu</h3>
+          <div class="card about">
+            <svg class="k-mark" aria-hidden="true"><use href="#i-k"/></svg>
+            <div><b>K.AI</b> <span id="set-version"></span><small>Lời nhắc hệ thống: <code>system-prompt.js</code>. Khoá API chỉ lưu trên máy này.</small></div>
+          </div>
+        </section>
       </div>
-      <div class="grid2">
-        <button id="img-generate" type="button" class="btn">TẠO ẢNH</button>
-        <button id="img-clear" type="button" class="btn btn-red">XOÁ</button>
-      </div>
-      <div id="img-stage" class="stage box empty"></div>
-      <div id="img-log" class="box terminal mini-log"></div>
-      <div class="section-label">// LỊCH SỬ <span id="img-count"></span> (lưu trên máy)</div>
-      <div id="img-gallery" class="gallery"></div>
-    </main>
-
-    <!-- ---------- CÀI ĐẶT ---------- -->
-    <main class="panel panel-settings scroll" data-panel="settings" hidden>
-      <div class="set-group box">
-        <div class="set-head">// BỘ CÀI SẴN</div>
-        <select id="set-preset" class="field select" aria-label="Bộ cài sẵn">
-          <option value="">— tuỳ chỉnh —</option>
-        </select>
-        <div class="hint">điền nhanh địa chỉ + mô hình cho cả trò chuyện và tạo ảnh (khoá API giữ nguyên)</div>
-      </div>
-
-      <div class="set-group box">
-        <div class="set-head">// TRÒ CHUYỆN</div>
-        <label class="set-row"><span>địa chỉ API</span>
-          <input id="set-chatBaseUrl" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <label class="set-row"><span>mô hình</span>
-          <input id="set-chatModel" class="field" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <div class="set-row"><span>khoá API</span>
-          <div class="secret">
-            <input id="set-chatApiKey" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá API trò chuyện">
-            <button type="button" class="btn small" data-toggle-secret="set-chatApiKey">HIỆN</button>
-          </div></div>
-        <label class="check"><input id="set-stream" type="checkbox"> phát trực tiếp (hiện chữ dần khi trả lời)</label>
-      </div>
-
-      <div class="set-group box">
-        <div class="set-head">// TẠO ẢNH</div>
-        <label class="set-row"><span>nhà cung cấp</span>
-          <select id="set-imageProvider" class="field select" aria-label="Nhà cung cấp tạo ảnh">
-            <option value="free">Miễn phí (Pollinations)</option>
-            <option value="openai">Chuẩn OpenAI</option>
-            <option value="fal">fal.ai</option>
-          </select></label>
-
-        <!-- Miễn phí: Pollinations (không cần khoá) -->
-        <div id="img-prov-free" class="set-sub">
-          <label class="set-row"><span>mô hình</span>
-            <select id="set-pollModel" class="field select" aria-label="Mô hình Pollinations"></select></label>
-          <div class="set-row"><span>khoá Pollinations (không bắt buộc)</span>
-            <div class="secret">
-              <input id="set-pollApiKey" class="field" type="password" placeholder="để trống = miễn phí, không cần khoá" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá Pollinations">
-              <button type="button" class="btn small" data-toggle-secret="set-pollApiKey">HIỆN</button>
-            </div></div>
-          <div class="hint">không cần khoá: dùng mô hình sana, ảnh ~0,6 MP. Có khoá miễn phí từ enter.pollinations.ai thì dùng được flux, zimage, klein, kontext.</div>
-        </div>
-
-        <!-- Chuẩn OpenAI: {địa chỉ}/images/generations -->
-        <div id="img-prov-openai" class="set-sub" hidden>
-          <label class="set-row"><span>địa chỉ API</span>
-            <input id="set-imageBaseUrl" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="set-row"><span>mô hình</span>
-            <input id="set-imageModel" class="field" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="check"><input id="set-imageShareKey" type="checkbox"> Dùng chung khoá với trò chuyện</label>
-          <div id="row-imageApiKey" class="set-row"><span>khoá API ảnh</span>
-            <div class="secret">
-              <input id="set-imageApiKey" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá API tạo ảnh">
-              <button type="button" class="btn small" data-toggle-secret="set-imageApiKey">HIỆN</button>
-            </div></div>
-        </div>
-
-        <!-- fal.ai: https://fal.run/<mô hình> hoặc https://queue.fal.run/<mô hình> -->
-        <div id="img-prov-fal" class="set-sub" hidden>
-          <div class="set-row"><span>khoá fal.ai</span>
-            <div class="secret">
-              <input id="set-falApiKey" class="field" type="password" placeholder="KEY_ID:KEY_SECRET" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá fal.ai">
-              <button type="button" class="btn small" data-toggle-secret="set-falApiKey">HIỆN</button>
-            </div></div>
-          <label class="set-row"><span>mô hình có sẵn</span>
-            <select id="set-falModelPick" class="field select" aria-label="Chọn mô hình fal.ai">
-              <option value="">— tự nhập —</option>
-            </select></label>
-          <label class="set-row"><span>mô hình</span>
-            <input id="set-falModel" class="field" type="text" placeholder="fal-ai/flux/schnell" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-          <label class="set-row"><span>cách gọi</span>
-            <select id="set-falMode" class="field select" aria-label="Cách gọi fal.ai">
-              <option value="auto">tự động (hàng đợi cho mô hình chậm)</option>
-              <option value="sync">đồng bộ // fal.run</option>
-              <option value="queue">hàng đợi // queue.fal.run</option>
-            </select></label>
-          <div class="hint">lấy khoá tại fal.ai/dashboard/keys. Khoá chỉ lưu trên máy này.</div>
-        </div>
-      </div>
-
-      <div class="set-group box">
-        <div class="set-head">// BẢO MẬT</div>
-        <label class="check"><input id="set-lock" type="checkbox"> Bật khoá sinh trắc <span class="hint-inline">(<span id="set-lock-state"></span>)</span></label>
-        <button id="set-lock-reset" type="button" class="btn btn-red">ĐẶT LẠI KHOÁ</button>
-        <div class="hint">dùng Face ID / Touch ID / Windows Hello khi mở app. Khoá tiện lợi trên máy, không qua máy chủ.</div>
-      </div>
-
-      <div class="set-group box">
-        <div class="set-head">// DỮ LIỆU</div>
-        <div class="hint">mọi cài đặt, khoá API, nhật ký và ảnh chỉ lưu trên thiết bị này.</div>
-        <div class="grid2">
-          <button id="set-defaults" type="button" class="btn">KHÔI PHỤC MẶC ĐỊNH</button>
-          <button id="set-wipe" type="button" class="btn btn-red">XOÁ TOÀN BỘ DỮ LIỆU</button>
-        </div>
-      </div>
-
-      <div id="set-log" class="box terminal mini-log"></div>
-      <div class="footer-note">K.AI // lời nhắc hệ thống: system-prompt.js</div>
-    </main>
+    </div>
   </div>
 </body>
 </html>

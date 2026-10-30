@@ -3,12 +3,13 @@
  */
 
 /** Phiên bản ứng dụng (hiển thị trong nhật ký khi khởi động). */
-export const APP_VERSION = '1.2.1';
+export const APP_VERSION = '2.0.0';
 
 /** Khoá lưu trữ trong localStorage. */
 export const LS_KEYS = {
   settings: 'kai.settings.v1',
-  history: 'kai.history.v1',
+  history: 'kai.history.v1', // bản 1.x: một cuộc trò chuyện duy nhất (tự chuyển sang chats khi mở bản 2)
+  chats: 'kai.chats.v2',      // bản 2: nhiều cuộc trò chuyện
 };
 
 /** Tên / phiên bản cơ sở dữ liệu IndexedDB chứa ảnh. */
@@ -19,14 +20,18 @@ export const IDB_STORE = 'images';
 /** Cài đặt mặc định khi mở app lần đầu. */
 export const DEFAULT_SETTINGS = {
   chatBaseUrl: 'https://api.x.ai/v1',
-  chatModel: 'grok-4',
+  chatModel: 'grok-4.20-0309-non-reasoning',     // mô hình chế độ "Nhanh"
+  chatModelExpert: 'grok-4.20-0309-reasoning',   // mô hình chế độ "Chuyên gia"
+  chatMode: 'fast',          // 'fast' = Nhanh | 'expert' = Chuyên gia
   chatApiKey: '',
   stream: true,              // phát trực tiếp (SSE), tự lùi về không-stream nếu lỗi
+  vision: true,              // hiện nút đính kèm ảnh (gửi ảnh cho mô hình đọc được ảnh)
   imageBaseUrl: 'https://api.x.ai/v1',
   imageModel: 'grok-2-image',
   imageApiKey: '',
   imageShareKey: true,       // dùng chung khoá với trò chuyện
-  imageSize: '',             // '' = để nhà cung cấp tự chọn kích thước
+  imageSize: '',             // (bản 1.x) kích thước cũ — bản 2 dùng imageAspect
+  imageAspect: '1:1',        // '1:1' | '3:4' | '16:9'
   // 'free' = Miễn phí (Pollinations, không cần khoá) | 'openai' = Chuẩn OpenAI (/images/generations) | 'fal' = fal.ai
   // Người dùng cũ chưa lưu nhà cung cấp → nhận mặc định 'free'; ai đã chọn rồi thì giữ nguyên.
   imageProvider: 'free',
@@ -44,24 +49,23 @@ export const PRESETS = {
     label: 'Miễn phí (không cần khoá)',
     imageProvider: 'free',
     pollModel: 'sana',
-    imageSize: '1024x1024',
   },
   xai: {
     label: 'xAI (Grok)',
     chatBaseUrl: 'https://api.x.ai/v1',
-    chatModel: 'grok-4',
+    chatModel: 'grok-4.20-0309-non-reasoning',
+    chatModelExpert: 'grok-4.20-0309-reasoning',
     imageBaseUrl: 'https://api.x.ai/v1',
     imageModel: 'grok-2-image',
-    imageSize: '',
     imageProvider: 'openai',
   },
   openai: {
     label: 'OpenAI',
     chatBaseUrl: 'https://api.openai.com/v1',
     chatModel: 'gpt-4o-mini',
+    chatModelExpert: 'gpt-4o',
     imageBaseUrl: 'https://api.openai.com/v1',
     imageModel: 'gpt-image-1',
-    imageSize: '1024x1024',
     imageProvider: 'openai',
   },
   // fal.ai chỉ dùng cho TẠO ẢNH; phần trò chuyện giữ nguyên.
@@ -70,7 +74,6 @@ export const PRESETS = {
     imageProvider: 'fal',
     falModel: 'fal-ai/flux/schnell',
     falMode: 'auto',
-    imageSize: '1024x1024',
   },
 };
 
@@ -131,7 +134,27 @@ export function imageModelOf(s) {
   return s.imageProvider === 'fal' ? s.falModel : s.imageModel;
 }
 
-/** Các kích thước ảnh cho ô chọn. '' = mặc định của nhà cung cấp. */
+/**
+ * Tỉ lệ ảnh (nút 1:1 / 3:4 / 16:9) → kích thước gửi cho từng nhà cung cấp.
+ *  - fal: các giá trị khớp FAL_SIZE_MAP (square_hd / portrait_4_3 / landscape_16_9).
+ *  - openai: kích thước gpt-image-1 hỗ trợ (16:9 không có → 1536x1024 gần nhất).
+ *  - free: Pollinations tự thu nhỏ về ~0,6 MP.
+ */
+export const ASPECTS = ['1:1', '3:4', '16:9'];
+export const ASPECT_SIZES = {
+  free: { '1:1': '1024x1024', '3:4': '768x1024', '16:9': '1344x768' },
+  fal: { '1:1': '1024x1024', '3:4': '1024x1536', '16:9': '1792x1024' },
+  openai: { '1:1': '1024x1024', '3:4': '1024x1536', '16:9': '1536x1024' },
+};
+export function sizeFor(provider, aspect) {
+  const t = ASPECT_SIZES[provider] || ASPECT_SIZES.free;
+  return t[aspect] || t['1:1'];
+}
+
+/** Tên hiển thị nhà cung cấp tạo ảnh. */
+export const PROVIDER_LABELS = { free: 'Miễn phí', fal: 'fal.ai', openai: 'Chuẩn OpenAI' };
+
+/** Các kích thước ảnh (bản 1.x, giữ để tương thích). '' = mặc định của nhà cung cấp. */
 export const IMAGE_SIZES = [
   { value: '', label: 'mặc định' },
   { value: '1024x1024', label: '1024x1024 (vuông)' },

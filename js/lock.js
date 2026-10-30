@@ -13,7 +13,6 @@
  *  - Nếu thiết bị không hỗ trợ: hiện [CẢNH BÁO] và cho vào (không bao giờ khoá người dùng ở ngoài).
  *  - Khoá lại khi mở lại app hoặc quay lại sau > 5 phút chạy nền.
  */
-import { createLogger } from './log.js';
 import { el, sleep } from './ui.js';
 
 const LS_LOCK = 'kai.lock.v1';
@@ -77,11 +76,31 @@ function describe(e) {
   return map[e?.name] || e?.message || String(e);
 }
 
+/**
+ * Dòng trạng thái gọn cho màn hình khoá: chỉ giữ 3 dòng gần nhất, chữ mờ, không có nhãn kiểu terminal.
+ * Cùng giao diện ok/info/warn/error/clear với createLogger.
+ */
+function miniLog(box) {
+  const line = (level, text) => {
+    const d = el('div', `lock-line lv-${level}`, String(text).replace(/\s*\/\/\s*/g, ' · ').replace(/\.\.\.$/, '…').replace(/^./, (c) => c.toUpperCase()));
+    box.appendChild(d);
+    while (box.children.length > 3) box.firstElementChild.remove();
+    return d;
+  };
+  return {
+    ok: (t) => line('ok', t),
+    info: (t) => line('info', t),
+    warn: (t) => line('warn', t),
+    error: (t) => line('error', t),
+    clear: () => { box.textContent = ''; },
+  };
+}
+
 export function createLock() {
   const root = document.getElementById('lock');
   const scanner = document.getElementById('lock-scanner');
   const actions = document.getElementById('lock-actions');
-  const log = createLogger(document.getElementById('lock-log'));
+  const log = miniLog(document.getElementById('lock-log'));
 
   let unlocked = false;
   let busy = false;
@@ -93,7 +112,7 @@ export function createLock() {
   function setActions(buttons) {
     actions.textContent = '';
     buttons.forEach((b) => {
-      const btn = el('button', 'btn' + (b.danger ? ' btn-red' : '') + (b.ghost ? ' btn-ghost' : ''), b.label);
+      const btn = el('button', 'btn ' + (b.danger ? 'btn-danger' : b.ghost ? 'btn-ghost' : 'btn-primary'), b.label);
       btn.type = 'button';
       btn.addEventListener('click', b.onClick);
       actions.appendChild(btn);
@@ -203,7 +222,7 @@ export function createLock() {
       busy = false;
       setPhase('fail');
       log.error(`xác thực thất bại // ${describe(e)}`);
-      setActions([{ label: 'THỬ LẠI', onClick: verify }]);
+      setActions([{ label: 'Thử lại', onClick: verify }]);
     }
   }
 
@@ -213,12 +232,12 @@ export function createLock() {
     log.info('chưa có khoá sinh trắc trên thiết bị này');
     const doSetup = async () => {
       if (await register()) await open('đã thiết lập khoá // chào Khang');
-      else setActions([{ label: 'THỬ LẠI', onClick: doSetup }, { label: 'BỎ QUA', ghost: true, onClick: skip }]);
+      else setActions([{ label: 'Thử lại', onClick: doSetup }, { label: 'Bỏ qua', ghost: true, onClick: skip }]);
     };
-    const skip = () => { writeState({ enabled: false }); log.warn('đã bỏ qua khoá sinh trắc // bật lại trong CÀI ĐẶT'); open(); };
+    const skip = () => { writeState({ enabled: false }); log.warn('đã bỏ qua khoá sinh trắc // bật lại trong Cài đặt'); open(); };
     setActions([
-      { label: 'THIẾT LẬP KHOÁ SINH TRẮC', onClick: doSetup },
-      { label: 'BỎ QUA', ghost: true, onClick: skip },
+      { label: 'Thiết lập Face ID', onClick: doSetup },
+      { label: 'Bỏ qua', ghost: true, onClick: skip },
     ]);
   }
 
@@ -246,7 +265,7 @@ export function createLock() {
     if (!st.credId) { showSetup(); return done; }
     if (needsTap()) {
       log.info('chạm để quét Face ID');
-      setActions([{ label: 'MỞ KHOÁ', onClick: verify }]);
+      setActions([{ label: 'Mở khoá', onClick: verify }]);
     } else {
       verify();
     }
