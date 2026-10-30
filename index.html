@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>K.AI</title>
+  <meta name="description" content="K.AI — trợ lý AI cá nhân: trò chuyện và tạo ảnh.">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <!-- PWA / iOS -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="K.AI">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body class="locked" data-tab="chat">
+
+  <!-- ================= MÀN HÌNH KHOÁ SINH TRẮC ================= -->
+  <section id="lock" class="lock" aria-label="Khoá sinh trắc">
+    <div class="lock-inner">
+      <img class="lock-logo" src="icons/icon-192.png" alt="K.AI" width="72" height="72">
+      <div class="lock-title">K.AI // XÁC THỰC SINH TRẮC</div>
+
+      <div id="lock-scanner" class="scanner" data-phase="idle" aria-hidden="true">
+        <!-- Quét khuôn mặt: khung dây + điểm lưới + vạch quét -->
+        <svg class="scan-face" viewBox="0 0 200 240">
+          <defs>
+            <clipPath id="faceClip"><path d="M100 18 C150 18 172 58 170 108 C168 160 140 214 100 222 C60 214 32 160 30 108 C28 58 50 18 100 18 Z"/></clipPath>
+            <linearGradient id="scanGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#3ddc84" stop-opacity="0"/>
+              <stop offset="0.85" stop-color="#3ddc84" stop-opacity="0.35"/>
+              <stop offset="1" stop-color="#7dffb3" stop-opacity="1"/>
+            </linearGradient>
+            <pattern id="dots" width="14" height="14" patternUnits="userSpaceOnUse">
+              <circle cx="7" cy="7" r="1.2" fill="#3ddc84"/>
+            </pattern>
+          </defs>
+          <!-- góc khung -->
+          <path class="corner" d="M8 40 V8 H40 M160 8 H192 V40 M192 200 V232 H160 M40 232 H8 V200"/>
+          <g clip-path="url(#faceClip)">
+            <rect x="0" y="0" width="200" height="240" fill="url(#dots)" class="grid-dots"/>
+            <rect class="scanline" x="0" y="-60" width="200" height="60" fill="url(#scanGrad)"/>
+          </g>
+          <!-- đường viền khuôn mặt & đường lưới -->
+          <path class="wire" d="M100 18 C150 18 172 58 170 108 C168 160 140 214 100 222 C60 214 32 160 30 108 C28 58 50 18 100 18 Z"/>
+          <path class="wire thin" d="M100 18 V222 M30 108 H170 M42 70 Q100 50 158 70 M38 150 Q100 170 162 150"/>
+          <path class="wire" d="M58 96 Q72 86 86 96 Q72 104 58 96 Z M114 96 Q128 86 142 96 Q128 104 114 96 Z"/>
+          <path class="wire" d="M100 104 L92 146 Q100 152 108 146"/>
+          <path class="wire" d="M76 176 Q100 190 124 176"/>
+          <g class="nodes">
+            <circle cx="72" cy="96" r="2.5"/><circle cx="128" cy="96" r="2.5"/><circle cx="100" cy="146" r="2.5"/>
+            <circle cx="76" cy="176" r="2.5"/><circle cx="124" cy="176" r="2.5"/><circle cx="100" cy="18" r="2.5"/>
+            <circle cx="30" cy="108" r="2.5"/><circle cx="170" cy="108" r="2.5"/><circle cx="100" cy="222" r="2.5"/>
+          </g>
+        </svg>
+        <!-- Quét mống mắt: hình mắt + vòng đồng tâm xoay -->
+        <svg class="scan-iris" viewBox="0 0 200 240">
+          <path class="wire" d="M10 120 Q100 40 190 120 Q100 200 10 120 Z"/>
+          <g class="ring r1"><circle cx="100" cy="120" r="44"/></g>
+          <g class="ring r2"><circle cx="100" cy="120" r="34"/></g>
+          <g class="ring r3"><circle cx="100" cy="120" r="24"/></g>
+          <circle class="pupil" cx="100" cy="120" r="11"/>
+          <path class="wire thin" d="M100 60 V76 M100 164 V180 M40 120 H56 M144 120 H160"/>
+        </svg>
+      </div>
+
+      <div id="lock-log" class="lock-log" aria-live="polite"></div>
+      <div id="lock-actions" class="lock-actions"></div>
+    </div>
+  </section>
+
+  <!-- ================= ỨNG DỤNG ================= -->
+  <div class="app">
+    <header class="header">
+      <div class="top">
+        <span class="host">
+          <img class="logo" src="icons/icon-64.png" alt="K.AI" width="20" height="20">
+          GỐC@IPHONE<span class="dot" aria-hidden="true"></span>MÁY.NỘI.BỘ
+        </span>
+        <span id="clock" class="clock">--:--:--</span>
+      </div>
+      <div id="status" class="status">ĐANG KHỞI ĐỘNG...</div>
+      <nav class="tabs" role="tablist">
+        <button type="button" class="tab on" data-tab-btn="chat" role="tab">TRÒ CHUYỆN</button>
+        <button type="button" class="tab" data-tab-btn="image" role="tab">TẠO ẢNH</button>
+        <button type="button" class="tab" data-tab-btn="settings" role="tab">CÀI ĐẶT</button>
+      </nav>
+    </header>
+
+    <!-- ---------- TRÒ CHUYỆN ---------- -->
+    <main class="panel panel-chat" data-panel="chat">
+      <div id="chat-log" class="box terminal" aria-live="polite"><div id="chat-idle" class="idle"><span class="idle-time"></span><span class="idle-text">đang chờ lệnh</span> <span class="cursor"></span></div></div>
+      <div class="input-row">
+        <textarea id="chat-input" class="field" rows="1" placeholder="> nhập lệnh..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="send" aria-label="Nhập tin nhắn"></textarea>
+        <button id="chat-send" type="button" class="btn">GỬI</button>
+      </div>
+      <div class="grid2">
+        <button id="chat-export" type="button" class="btn">XUẤT NHẬT KÝ</button>
+        <button id="chat-clear" type="button" class="btn btn-red">XOÁ NHẬT KÝ</button>
+      </div>
+    </main>
+
+    <!-- ---------- TẠO ẢNH ---------- -->
+    <main class="panel panel-image scroll" data-panel="image" hidden>
+      <label class="prompt-box box">
+        <span class="prompt-label">&gt; mô tả ảnh:</span>
+        <textarea id="img-prompt" rows="3" placeholder="thành phố cyberpunk về đêm, mưa, đèn neon xanh lá, góc nhìn từ trên cao" spellcheck="false" aria-label="Mô tả ảnh"></textarea>
+      </label>
+      <div class="size-row">
+        <span>// kích thước</span>
+        <select id="img-size" class="field select" aria-label="Kích thước ảnh"></select>
+      </div>
+      <div class="grid2">
+        <button id="img-generate" type="button" class="btn">TẠO ẢNH</button>
+        <button id="img-clear" type="button" class="btn btn-red">XOÁ</button>
+      </div>
+      <div id="img-stage" class="stage box empty"></div>
+      <div id="img-log" class="box terminal mini-log"></div>
+      <div class="section-label">// LỊCH SỬ <span id="img-count"></span> (lưu trên máy)</div>
+      <div id="img-gallery" class="gallery"></div>
+    </main>
+
+    <!-- ---------- CÀI ĐẶT ---------- -->
+    <main class="panel panel-settings scroll" data-panel="settings" hidden>
+      <div class="set-group box">
+        <div class="set-head">// BỘ CÀI SẴN</div>
+        <select id="set-preset" class="field select" aria-label="Bộ cài sẵn">
+          <option value="">— tuỳ chỉnh —</option>
+        </select>
+        <div class="hint">điền nhanh địa chỉ + mô hình cho cả trò chuyện và tạo ảnh (khoá API giữ nguyên)</div>
+      </div>
+
+      <div class="set-group box">
+        <div class="set-head">// TRÒ CHUYỆN</div>
+        <label class="set-row"><span>địa chỉ API</span>
+          <input id="set-chatBaseUrl" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="set-row"><span>mô hình</span>
+          <input id="set-chatModel" class="field" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <div class="set-row"><span>khoá API</span>
+          <div class="secret">
+            <input id="set-chatApiKey" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá API trò chuyện">
+            <button type="button" class="btn small" data-toggle-secret="set-chatApiKey">HIỆN</button>
+          </div></div>
+        <label class="check"><input id="set-stream" type="checkbox"> phát trực tiếp (hiện chữ dần khi trả lời)</label>
+      </div>
+
+      <div class="set-group box">
+        <div class="set-head">// TẠO ẢNH</div>
+        <label class="set-row"><span>địa chỉ API</span>
+          <input id="set-imageBaseUrl" class="field" type="url" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="set-row"><span>mô hình</span>
+          <input id="set-imageModel" class="field" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <label class="check"><input id="set-imageShareKey" type="checkbox"> Dùng chung khoá với trò chuyện</label>
+        <div id="row-imageApiKey" class="set-row"><span>khoá API ảnh</span>
+          <div class="secret">
+            <input id="set-imageApiKey" class="field" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Khoá API tạo ảnh">
+            <button type="button" class="btn small" data-toggle-secret="set-imageApiKey">HIỆN</button>
+          </div></div>
+      </div>
+
+      <div class="set-group box">
+        <div class="set-head">// BẢO MẬT</div>
+        <label class="check"><input id="set-lock" type="checkbox"> Bật khoá sinh trắc <span class="hint-inline">(<span id="set-lock-state"></span>)</span></label>
+        <button id="set-lock-reset" type="button" class="btn btn-red">ĐẶT LẠI KHOÁ</button>
+        <div class="hint">dùng Face ID / Touch ID / Windows Hello khi mở app. Khoá tiện lợi trên máy, không qua máy chủ.</div>
+      </div>
+
+      <div class="set-group box">
+        <div class="set-head">// DỮ LIỆU</div>
+        <div class="hint">mọi cài đặt, khoá API, nhật ký và ảnh chỉ lưu trên thiết bị này.</div>
+        <div class="grid2">
+          <button id="set-defaults" type="button" class="btn">KHÔI PHỤC MẶC ĐỊNH</button>
+          <button id="set-wipe" type="button" class="btn btn-red">XOÁ TOÀN BỘ DỮ LIỆU</button>
+        </div>
+      </div>
+
+      <div id="set-log" class="box terminal mini-log"></div>
+      <div class="footer-note">K.AI // lời nhắc hệ thống: system-prompt.js</div>
+    </main>
+  </div>
+</body>
+</html>
