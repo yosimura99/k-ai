@@ -18,7 +18,7 @@ Trợ lý AI cá nhân của Khang: **trò chuyện** và **tạo ảnh**, giao 
 
 Mặc định cho người dùng mới: không cần khoá, không cần tài khoản. Bộ cài sẵn **Miễn phí (không cần khoá)** trong CÀI ĐẶT đưa về chế độ này. Cài đặt cũ đã lưu giữ nguyên; chỉ khi chưa chọn nhà cung cấp mới tự dùng Pollinations.
 
-- **Không khoá** → `GET https://image.pollinations.ai/prompt/<lời nhắc>?width=&height=&seed=&model=sana&nologo=true&referrer=<tên miền>`. Máy chủ hiện chỉ phục vụ mô hình **sana** (DreamShaper 8 LCM), ảnh bị thu nhỏ còn khoảng 0,6 MP (vd. 1024x1024 → ~776x776), mỗi ảnh ~4–10 giây.
+- **Không khoá** → `GET https://image.pollinations.ai/prompt/<lời nhắc>?width=&height=&seed=&model=sana&nologo=true&referrer=<tên miền>`. Máy chủ hiện chỉ phục vụ mô hình **sana** (DreamShaper 8 LCM), ảnh bị thu nhỏ còn khoảng 0,6 MP (vd. 1024x1024 → 768x768), mỗi ảnh ~4–10 giây, có hình mờ `pollinations.ai` ở góc (tham số `nologo` bị bỏ qua khi không có khoá).
 - **Có khoá** (miễn phí tại <https://enter.pollinations.ai/keys>) → `GET https://gen.pollinations.ai/image/<lời nhắc>` với `Authorization: Bearer <khoá>`, dùng được `flux`, `zimage`, `klein`, `kontext`.
 - Kích thước ở tab TẠO ẢNH được đổi thành `width`/`height`; mỗi yêu cầu dùng một hạt giống ngẫu nhiên.
 - Khi bị giới hạn tốc độ (HTTP 429/503) app ghi `[CẢNH BÁO]`, chờ theo `Retry-After` (mặc định 10 giây) rồi thử lại **một lần**.

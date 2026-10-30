@@ -55,7 +55,16 @@ export async function pollGenerate({ model, key, prompt, size, signal, log }) {
     const type = res.headers.get('content-type') || '';
     if (res.ok && type.startsWith('image/')) {
       const blob = await res.blob();
-      return { blob, size: `${width}x${height}`, seed, model };
+      let size = `${width}x${height}`;
+      try {
+        const bmp = await createImageBitmap(blob);
+        if (bmp.width !== width || bmp.height !== height) {
+          log.info(`máy chủ trả ảnh ${bmp.width}x${bmp.height} (yêu cầu ${size})`);
+          size = `${bmp.width}x${bmp.height}`;
+        }
+        bmp.close();
+      } catch { /* không đọc được kích thước, giữ kích thước yêu cầu */ }
+      return { blob, size, seed, model };
     }
     const detail = res.ok ? 'phản hồi không phải ảnh' : await readErrorDetail(res);
     if (RATE_STATUS.has(res.status) && attempt === 0) {

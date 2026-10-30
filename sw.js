@@ -3,7 +3,7 @@
  * KHÔNG BAO GIỜ lưu đệm lời gọi API: chỉ xử lý yêu cầu GET cùng nguồn (same-origin).
  * Đổi CACHE khi phát hành bản mới để trình duyệt nạp lại tệp.
  */
-const CACHE = 'kai-shell-v4';
+const CACHE = 'kai-shell-v5';
 const SHELL = [
   './',
   './index.html',
