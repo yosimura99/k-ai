@@ -18,7 +18,7 @@ Trợ lý AI cá nhân của Khang: **trò chuyện** và **tạo ảnh**, giao 
 
 Mặc định cho người dùng mới: không cần khoá, không cần tài khoản. Bộ cài sẵn **Miễn phí (không cần khoá)** trong CÀI ĐẶT đưa về chế độ này. Cài đặt cũ đã lưu giữ nguyên; chỉ khi chưa chọn nhà cung cấp mới tự dùng Pollinations.
 
-- **Không khoá** → `GET https://image.pollinations.ai/prompt/<lời nhắc>?width=&height=&seed=&model=sana&nologo=true&referrer=<tên miền>`. Máy chủ hiện chỉ phục vụ mô hình **sana** (DreamShaper 8 LCM), ảnh bị thu nhỏ còn khoảng 0,6 MP (vd. 1024x1024 → 768x768), mỗi ảnh ~4–10 giây, có hình mờ `pollinations.ai` ở góc (tham số `nologo` bị bỏ qua khi không có khoá).
+- **Không khoá** → `GET https://image.pollinations.ai/prompt/<lời nhắc>?width=&height=&seed=&model=sana&nologo=true&referrer=<tên miền>`. Máy chủ hiện chỉ phục vụ mô hình **sana** (DreamShaper 8 LCM) dù yêu cầu mô hình khác, và giới hạn ảnh ở khoảng 0,59 MP: vuông tối đa 768x768 (yêu cầu 1024, 1536 hay 2048 đều ra 768x768; `enhance`, `quality` không đổi được), dọc 1024x1792 → 580x1015, mỗi ảnh ~4–10 giây, có hình mờ `pollinations.ai` ở góc (tham số `nologo` bị bỏ qua khi không có khoá).
 - **Có khoá** (miễn phí tại <https://enter.pollinations.ai/keys>) → `GET https://gen.pollinations.ai/image/<lời nhắc>` với `Authorization: Bearer <khoá>`, dùng được `flux`, `zimage`, `klein`, `kontext`.
 - Kích thước ở tab TẠO ẢNH được đổi thành `width`/`height`; mỗi yêu cầu dùng một hạt giống ngẫu nhiên.
 - Khi bị giới hạn tốc độ (HTTP 429/503) app ghi `[CẢNH BÁO]`, chờ theo `Retry-After` (mặc định 10 giây) rồi thử lại **một lần**.
@@ -46,6 +46,10 @@ Mặc định cho người dùng mới: không cần khoá, không cần tài kh
 
 Kích thước ở tab TẠO ẢNH được đổi sang tên của fal.ai: `1024x1024 → square_hd`, `512x512 / 256x256 → square`, `1024x1536 → portrait_4_3`, `1536x1024 → landscape_4_3`, `1024x1792 → portrait_16_9`, `1792x1024 → landscape_16_9`, `mặc định` → để mô hình tự chọn.
 Yêu cầu gửi `num_images: 1` và `enable_safety_checker: false` với mô hình có tham số này (fal.ai chỉ tôn trọng khi tài khoản được phép). Ảnh trả về (`images[0].url`) được tải về và lưu thành Blob trong IndexedDB nên thư viện xem được khi ngoại tuyến; nếu không tải được thì chỉ lưu đường dẫn.
+
+## Hiển thị ảnh
+
+Ảnh luôn hiển thị nét: lớp sọc scanline của giao diện nằm dưới ảnh (khung xem, thư viện, trình xem toàn màn hình), ảnh không bị phóng to quá kích thước gốc, không có bộ lọc/độ mờ/hoà trộn. Ảnh lưu trong IndexedDB là đúng các byte gốc máy chủ trả về (không vẽ lại qua canvas, không nén lại).
 
 ## Lời nhắc hệ thống
 

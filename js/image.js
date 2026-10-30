@@ -146,7 +146,9 @@ export function initImage(ctx) {
     dl.addEventListener('click', () => download(rec));
     del.addEventListener('click', async () => { if (await remove(rec)) done(); });
     ov.addEventListener('click', (e) => { if (e.target === ov) done(); });
-    ov.append(top, img, cap, row);
+    const wrap = el('div', 'viewer-img');
+    wrap.appendChild(img);
+    ov.append(top, wrap, cap, row);
     document.body.appendChild(ov);
   }
 

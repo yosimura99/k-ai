@@ -3,7 +3,7 @@
  */
 
 /** Phiên bản ứng dụng (hiển thị trong nhật ký khi khởi động). */
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.2.1';
 
 /** Khoá lưu trữ trong localStorage. */
 export const LS_KEYS = {

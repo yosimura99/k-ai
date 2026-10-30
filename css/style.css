@@ -41,7 +41,9 @@ html, body {
 }
 body { height: 100vh; height: 100dvh; overscroll-behavior: none; }
 
-/* Hiệu ứng scanline nhẹ (không ảnh hưởng thao tác) */
+/* Hiệu ứng scanline nhẹ (không ảnh hưởng thao tác).
+   Ảnh tạo ra (khung xem, thư viện, toàn màn hình) được nâng lên trên lớp này
+   (z-index > 100) nên không bao giờ bị sọc. */
 body::after {
   content: "";
   position: fixed; inset: 0;
@@ -172,27 +174,36 @@ select option { background: #000; color: var(--green); }
   display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 50% 30%, #062a14, #010d06 45%, #000 75%);
 }
-.stage img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; cursor: zoom-in; }
+.stage img, .thumb img, .viewer img {
+  image-rendering: auto; filter: none; opacity: 1; mix-blend-mode: normal;
+  box-shadow: none; text-shadow: none;
+}
+.stage img {
+  position: relative; z-index: 101;
+  width: auto; height: auto; max-width: 100%; max-height: 100%;
+  object-fit: contain; display: block; cursor: zoom-in;
+}
 .stage.empty { background: repeating-linear-gradient(0deg, #04170b 0 1px, transparent 1px 22px), repeating-linear-gradient(90deg, #04170b 0 1px, transparent 1px 22px), #000; }
 .stage-empty { color: var(--green-dim); font-size: 12px; text-align: center; padding: 20px; }
-.stage-label { position: absolute; top: 12px; left: 12px; font-size: 10px; color: var(--green-hi); background: #000a; padding: 2px 5px; letter-spacing: 1px; }
+.stage-label { z-index: 102; position: absolute; top: 12px; left: 12px; font-size: 10px; color: var(--green-hi); background: #000a; padding: 2px 5px; letter-spacing: 1px; }
 .mini-log { flex: none; max-height: 120px; min-height: 40px; font-size: 11.5px; }
 .mini-log:empty { display: none; }
 .section-label { font-size: 11px; color: var(--green-dim); margin-top: 2px; }
 .gallery { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 @media (min-width: 700px) { .gallery { grid-template-columns: repeat(6, 1fr); } }
-.thumb { aspect-ratio: 1; border: 1px solid var(--border); background: #000; padding: 0; cursor: pointer; overflow: hidden; border-radius: 0; }
+.thumb { position: relative; z-index: 101; aspect-ratio: 1; border: 1px solid var(--border); background: #000; padding: 0; cursor: pointer; overflow: hidden; border-radius: 0; }
 .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .thumb:hover { border-color: var(--green); }
 .gallery-empty { grid-column: 1 / -1; color: var(--green-dim); font-size: 11px; border: 1px dashed var(--border); padding: 14px; text-align: center; }
 
 /* Trình xem ảnh toàn màn hình */
 .viewer {
-  position: fixed; inset: 0; z-index: 50; background: #000f;
+  position: fixed; inset: 0; z-index: 110; background: #000;
   display: flex; flex-direction: column; gap: 8px;
   padding: calc(var(--safe-t) + 12px) calc(var(--safe-r) + 12px) calc(var(--safe-b) + 12px) calc(var(--safe-l) + 12px);
 }
-.viewer img { flex: 1; min-height: 0; width: 100%; object-fit: contain; border: 1px solid var(--border); }
+.viewer-img { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.viewer img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; border: 1px solid var(--border); }
 .viewer-top { font-size: 11px; color: var(--green-dim); letter-spacing: 1px; overflow-wrap: anywhere; }
 .viewer-cap { font-size: 12px; color: var(--green-user); max-height: 4.8em; overflow-y: auto; overflow-wrap: anywhere; }
 .viewer-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
@@ -213,7 +224,7 @@ select option { background: #000; color: var(--green); }
 .footer-note { font-size: 10.5px; color: var(--green-dim); text-align: center; padding: 6px 0 2px; flex: none; }
 
 /* ---------- hộp thoại ---------- */
-.modal { position: fixed; inset: 0; z-index: 60; background: #000c; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal { position: fixed; inset: 0; z-index: 120; background: #000c; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .modal-box { width: 100%; max-width: 380px; background: #000; border: 1px solid var(--green-mid); padding: 16px; box-shadow: 0 0 24px #3ddc8422; display: flex; flex-direction: column; gap: 14px; }
 .modal-msg { color: var(--green); font-size: 13px; white-space: pre-wrap; }
 .modal-btns { display: flex; gap: 6px; }
@@ -223,7 +234,7 @@ select option { background: #000; color: var(--green); }
    MÀN HÌNH KHOÁ SINH TRẮC
    ============================================================ */
 .lock {
-  position: fixed; inset: 0; z-index: 80; background: #000;
+  position: fixed; inset: 0; z-index: 130; background: #000;
   display: flex; align-items: center; justify-content: center;
   padding: calc(var(--safe-t) + 16px) calc(var(--safe-r) + 18px) calc(var(--safe-b) + 16px) calc(var(--safe-l) + 18px);
   transition: opacity .35s;
